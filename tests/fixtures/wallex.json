@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "message": "ok",
+  "result": {
+    "symbols": {
+      "USDTTMN": {
+        "symbol": "USDTTMN",
+        "stats": {
+          "lastPrice": "273102.0000000000000000",
+          "bidPrice": "273100.0000000000000000",
+          "askPrice": "273105.0000000000000000"
+        }
+      },
+      "BTCUSDT": {
+        "symbol": "BTCUSDT",
+        "stats": {
+          "lastPrice": "60000.5"
+        }
+      }
+    }
+  }
+}

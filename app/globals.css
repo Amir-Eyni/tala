@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Tala UI v3 — Design Tokens
+   Theme: yellow-navy · Dark first · Light follows prefers-color-scheme
+   --------------------------------------------------------------------------
+   Raw tokens live in --tala-* so they can be shared by Tailwind utilities,
+   component classes and inline styles. Tailwind's public names are mapped
+   from them in the @theme block below.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* Color — dark (default) */
+  --tala-bg: #0a1330;
+  --tala-surface: #112052;
+  --tala-surface-2: #172a66;
+  --tala-line: #27397a;
+  --tala-text: #f4f1e8;
+  --tala-muted: #9faedb;
+  --tala-brand: #e8a800;
+  --tala-on-brand: #0a1330;
+  --tala-up: #3ddc97;
+  --tala-down: #ff6b6b;
+  --tala-warn: #ffc93c;
+
+  /* Delta flash — painted on the whole AssetRow background */
+  --tala-flash-up: rgba(61, 220, 151, 0.28);
+  --tala-flash-down: rgba(255, 107, 107, 0.28);
+  --tala-duration-flash: 1500ms;
+
+  /* Typography */
+  --tala-font-sans:
+    var(--font-vazirmatn, "Vazirmatn"), Tahoma, "Segoe UI", sans-serif;
+  --tala-line-height: 1.7;
+  --tala-text-hero: clamp(2.6rem, 9vw, 5rem);
+  --tala-text-hero-leading: 1.1;
+  --tala-text-row: 1.35rem;
+  --tala-text-row-leading: 1.4;
+  --tala-text-row-lg: 1.8rem;
+  --tala-text-row-lg-leading: 1.3;
+
+  /* Radius */
+  --tala-radius-hero: 20px;
+  --tala-radius-row: 14px;
+  --tala-radius-control: 10px;
+  --tala-radius-pill: 99px;
+
+  /* Spacing / layout */
+  --tala-page-max-width: 1040px;
+  --tala-page-padding-x: 20px;
+  --tala-row-gap: 14px;
+  --tala-row-padding-y: 18px;
+  --tala-row-padding-x: 22px;
+
+  /* Focus ring */
+  --tala-focus-ring: var(--tala-brand);
+  --tala-focus-ring-width: 3px;
+  --tala-focus-ring-offset: 2px;
+
+  /* Motion */
+  --tala-duration-live-pulse: 2s;
+  --tala-ease-live-pulse: ease-in-out;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --tala-bg: #f5f1e4;
+    --tala-surface: #ffffff;
+    --tala-surface-2: #eaf0ff;
+    --tala-line: #c9d3f0;
+    --tala-text: #0a1330;
+    --tala-muted: #4b5a8c;
+    --tala-brand: #e8a800;
+    --tala-on-brand: #0a1330;
+    --tala-up: #0e8f5b;
+    --tala-down: #c93636;
+    --tala-warn: #b07c00;
+
+    --tala-flash-up: rgba(61, 220, 151, 0.18);
+    --tala-flash-down: rgba(255, 107, 107, 0.18);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Tailwind v4 theme bridge
+   @theme inline keeps utilities pointing at the live --tala-* values, so the
+   prefers-color-scheme block above automatically reskins every utility.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  /* Colors */
+  --color-bg: var(--tala-bg);
+  --color-background: var(--tala-bg);
+  --color-surface: var(--tala-surface);
+  --color-surface-2: var(--tala-surface-2);
+  --color-surface2: var(--tala-surface-2);
+  --color-line: var(--tala-line);
+  --color-text: var(--tala-text);
+  --color-foreground: var(--tala-text);
+  --color-muted: var(--tala-muted);
+  --color-brand: var(--tala-brand);
+  --color-on-brand: var(--tala-on-brand);
+  --color-up: var(--tala-up);
+  --color-down: var(--tala-down);
+  --color-warn: var(--tala-warn);
+  --color-flash-up: var(--tala-flash-up);
+  --color-flash-down: var(--tala-flash-down);
+
+  /* Typography */
+  --font-sans: var(--tala-font-sans);
+  --leading-base: var(--tala-line-height);
+
+  --text-hero: var(--tala-text-hero);
+  --text-hero--line-height: var(--tala-text-hero-leading);
+  --text-row: var(--tala-text-row);
+  --text-row--line-height: var(--tala-text-row-leading);
+  --text-row-lg: var(--tala-text-row-lg);
+  --text-row-lg--line-height: var(--tala-text-row-lg-leading);
+
+  /* Radius */
+  --radius-hero: var(--tala-radius-hero);
+  --radius-row: var(--tala-radius-row);
+  --radius-control: var(--tala-radius-control);
+  --radius-pill: var(--tala-radius-pill);
+
+  /* Layout */
+  --container-page: var(--tala-page-max-width);
+  --spacing-page-x: var(--tala-page-padding-x);
+  --spacing-row-gap: var(--tala-row-gap);
+  --spacing-row-y: var(--tala-row-padding-y);
+  --spacing-row-x: var(--tala-row-padding-x);
+
+  /* Motion */
+  --animate-live-pulse: tala-live-pulse var(--tala-duration-live-pulse)
+    var(--tala-ease-live-pulse) infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Keyframes
+   -------------------------------------------------------------------------- */
+@keyframes tala-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+}
+
+/*
+ * FlashUp / FlashDown.
+ * Only the row background animates; the price itself never moves or fades, so
+ * digits stay perfectly readable while the rate changes.
+ */
+@keyframes tala-flash-up {
+  0% {
+    background-color: var(--tala-flash-up);
+  }
+
+  100% {
+    background-color: var(--tala-surface);
+  }
+}
+
+@keyframes tala-flash-down {
+  0% {
+    background-color: var(--tala-flash-down);
+  }
+
+  100% {
+    background-color: var(--tala-surface);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--tala-line);
+  }
+
+  html {
+    background-color: var(--tala-bg);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--tala-bg);
+    color: var(--tala-text);
+    font-family: var(--tala-font-sans);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    line-height: var(--tala-line-height);
+    padding:
+      env(safe-area-inset-top, 0px)
+      env(safe-area-inset-right, 0px)
+      env(safe-area-inset-bottom, 0px)
+      env(safe-area-inset-left, 0px);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: var(--tala-focus-ring-width) solid var(--tala-focus-ring);
+    outline-offset: var(--tala-focus-ring-offset);
+  }
+
+  ::selection {
+    background-color: var(--tala-brand);
+    color: var(--tala-on-brand);
+  }
+
+  ::placeholder {
+    color: var(--tala-muted);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Shared utilities
+   -------------------------------------------------------------------------- */
+@utility tala-page {
+  width: 100%;
+  max-width: var(--tala-page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--tala-page-padding-x);
+}
+
+/* Tabular figures for prices, percentages and timestamps. */
+@utility tala-numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@layer components {
+  /*
+   * Apply one of these classes when a new rate arrives. Keep it on the row for
+   * --tala-duration-flash (or remove it afterwards); the animation ends on the
+   * surface color so there is no visual jump either way.
+   */
+  .tala-flash-up,
+  .tala-flash-down {
+    animation-duration: var(--tala-duration-flash);
+    animation-timing-function: ease-out;
+    animation-iteration-count: 1;
+    animation-fill-mode: none;
+  }
+
+  .tala-flash-up {
+    animation-name: tala-flash-up;
+  }
+
+  .tala-flash-down {
+    animation-name: tala-flash-down;
+  }
+
+  /* Row price: 1.35rem on mobile, 1.8rem from the md breakpoint up. */
+  .tala-row-price {
+    font-size: var(--tala-text-row);
+    line-height: var(--tala-text-row-leading);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+@media (min-width: 48rem) {
+  .tala-row-price {
+    font-size: var(--tala-text-row-lg);
+    line-height: var(--tala-text-row-lg-leading);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility — reduced motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

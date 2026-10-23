@@ -1,0 +1,29 @@
+{
+  "data": [
+    {
+      "tradeable": {
+        "name": "Gold18",
+        "nameFa": "طلا ۱۸ عیار",
+        "nitrimoSymbol": "GOLD18/IRT",
+        "priceCurrency": "TOMAN",
+        "unitCode": "GRAM"
+      },
+      "buyPrice": 26900000,
+      "sellPrice": 26900000,
+      "priceCurrency": "TOMAN",
+      "baseUnitPrice": 26900000,
+      "unitCode": "GRAM",
+      "unitTitle": "گرم"
+    },
+    {
+      "tradeable": {
+        "name": "Gold21",
+        "nitrimoSymbol": "GOLD21/IRT",
+        "priceCurrency": "TOMAN",
+        "unitCode": "GRAM"
+      },
+      "baseUnitPrice": 31380000,
+      "unitCode": "GRAM"
+    }
+  ]
+}
