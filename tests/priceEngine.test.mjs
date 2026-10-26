@@ -299,6 +299,46 @@ test("stale-while-revalidate returns old data and then applies the new price", a
   assert.equal(next.payload.assets.usd.isStale, false);
 });
 
+test("percentage change resets on unchanged successful price refreshes", async () => {
+  let currentPrice = BASE_PRICES.usd;
+  const registry = oneGroupRegistry(async ({ now }) =>
+    resultFor({ usd: currentPrice }, now),
+  );
+
+  await resolvePrices({ now: T0, registry, coldStartMaxWaitMs: 200 });
+
+  currentPrice += 10;
+  const changedRefresh = await resolvePrices({
+    now: T0 + 16_000,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+  await changedRefresh.refresh;
+
+  const changedPayload = await resolvePrices({
+    now: T0 + 16_001,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+  assert.equal(changedPayload.payload.assets.usd.previousPrice, BASE_PRICES.usd);
+  assert.equal(changedPayload.payload.assets.usd.changePercent, 0.01);
+
+  const unchangedRefresh = await resolvePrices({
+    now: T0 + 32_000,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+  await unchangedRefresh.refresh;
+
+  const unchangedPayload = await resolvePrices({
+    now: T0 + 32_001,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+  assert.equal(unchangedPayload.payload.assets.usd.previousPrice, currentPrice);
+  assert.equal(unchangedPayload.payload.assets.usd.changePercent, 0);
+});
+
 test("500 concurrent cold requests share one fetch per group", async () => {
   const calls = { fx: 0, gold18: 0, gold24: 0 };
   const registry = createRegistry({

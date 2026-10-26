@@ -156,15 +156,22 @@ test("talasea JSON path returns a toman integer per gram", () => {
 test("fetchTalasea prefers JSON and reports via=json", async () => {
   const fetchImpl = createFetch([
     mockResponse(fixture("talasea.json"), { url: SOURCE_URLS.talaseaJson }),
+    mockResponse(
+      `<table><tr><td>بالاترین قیمت روز</td><td><span>270,000,000</span></td></tr><tr><td>پایین ترین قیمت روز</td><td><span>260,000,000</span></td></tr></table>`,
+      { url: SOURCE_URLS.gold18Html },
+    ),
   ]);
 
   const result = await fetchTalasea({ fetchImpl, now: FIXED_NOW });
 
   assert.deepEqual(result.prices, { gold18k: 26_900_000 });
+  assert.deepEqual(result.ranges, {
+    gold18k: { high24h: 27_000_000, low24h: 26_000_000 },
+  });
   assert.equal(result.fetchedAt, FIXED_ISO);
   assert.equal(result.meta.via, "json");
   assert.ok(Number.isInteger(result.prices.gold18k));
-  assert.equal(fetchImpl.calls.length, 1);
+  assert.equal(fetchImpl.calls.length, 2);
 });
 
 test("fetchTalasea exposes optional validated 24-hour extrema", async () => {
@@ -321,8 +328,10 @@ test("fetchTgju converts rial to toman and returns an integer", async () => {
 test("fetchTgju extracts 24-hour extrema only when the HTML has both values", async () => {
   const html = `
     <span data-col="info.last_trade.PDrCotVal">86,000,000</span>
-    <span data-col="info.max">90,000,000</span>
-    <span data-col="info.min">80,000,000</span>
+    <table>
+      <tr><td>بالاترین قیمت روز</td><td><span>90,000,000</span></td></tr>
+      <tr><td>پایین ترین قیمت روز</td><td><span>80,000,000</span></td></tr>
+    </table>
   `;
   const fetchImpl = createFetch([
     mockResponse(html, { url: SOURCE_URLS.tgju }),

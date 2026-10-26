@@ -16,8 +16,8 @@ export const SOURCE_URLS = {
   talaseaJson: "https://alibaba-gateway.talasea.ir/level/prices",
   // HTML fallback for the 18-karat price.
   gold18Html: "https://www.tgju.org/profile/geram18",
-  // Verified live: HTML page, HTTP 200.
-  tgju: "https://www.tgju.org/profile/geram24/today",
+  // Profile statistics include the current price and daily high/low rows.
+  tgju: "https://www.tgju.org/profile/geram24",
 };
 
 /**

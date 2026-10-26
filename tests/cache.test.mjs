@@ -83,7 +83,7 @@ test("first commit sets previousPrice to price and getLastGood matches validator
   assert.equal(getHealth(T0), "stale");
 });
 
-test("different prices move previousPrice while equal prices keep it", () => {
+test("previousPrice tracks the immediately preceding successful refresh", () => {
   commitPrice("usd", 1_000, T0);
 
   assert.equal(commitPrice("usd", 2_000, T0 + 1_000), true);
@@ -95,7 +95,7 @@ test("different prices move previousPrice while equal prices keep it", () => {
   assert.equal(commitPrice("usd", 2_000, T0 + 2_000), true);
   state = getAssetState("usd", T0 + 2_000);
   assert.equal(state.price, 2_000);
-  assert.equal(state.previousPrice, 1_000);
+  assert.equal(state.previousPrice, 2_000);
   assert.equal(state.updatedAt, new Date(T0 + 2_000).toISOString());
   assert.equal(getLastGood("usd").updatedAt, T0 + 2_000);
 });
