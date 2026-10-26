@@ -8,6 +8,7 @@ import {
 } from "../utils/constants.server.js";
 import {
   fetchWithTimeout,
+  fetchText,
   parsePrice,
   readTextLimited,
   ScraperError,
@@ -128,6 +129,24 @@ test("fetchWallex returns equal integer usd/usdt prices and an ISO timestamp", a
   assert.equal(fetchImpl.calls.length, 1);
 });
 
+test("fetchWallex exposes validated 24-hour extrema when upstream provides them", async () => {
+  const payload = JSON.parse(fixture("wallex.json"));
+  payload.result.symbols.USDTTMN.stats["24h_highPrice"] =
+    "280000.0000000000000000";
+  payload.result.symbols.USDTTMN.stats["24h_lowPrice"] =
+    "260000.0000000000000000";
+  const fetchImpl = createFetch([
+    mockResponse(JSON.stringify(payload), { url: SOURCE_URLS.wallex }),
+  ]);
+
+  const result = await fetchWallex({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.ranges, {
+    usdt: { high24h: 280_000, low24h: 260_000 },
+    usd: { high24h: 280_000, low24h: 260_000 },
+  });
+});
+
 test("talasea JSON path returns a toman integer per gram", () => {
   const payload = JSON.parse(fixture("talasea.json"));
 
@@ -148,18 +167,33 @@ test("fetchTalasea prefers JSON and reports via=json", async () => {
   assert.equal(fetchImpl.calls.length, 1);
 });
 
+test("fetchTalasea exposes optional validated 24-hour extrema", async () => {
+  const payload = JSON.parse(fixture("talasea.json"));
+  payload.data[0].high24h = 27_500_000;
+  payload.data[0].low24h = 26_000_000;
+  const fetchImpl = createFetch([
+    mockResponse(JSON.stringify(payload), { url: SOURCE_URLS.talaseaJson }),
+  ]);
+
+  const result = await fetchTalasea({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.ranges, {
+    gold18k: { high24h: 27_500_000, low24h: 26_000_000 },
+  });
+});
+
 test("fetchTalasea falls back to DOM when JSON is invalid", async () => {
   const fetchImpl = createFetch([
     mockResponse("{broken json", { url: SOURCE_URLS.talaseaJson }),
     mockResponse(fixture("talasea.html"), {
-      url: "https://talasea.ir/geram18",
+      url: "https://www.tgju.org/profile/geram18",
     }),
   ]);
 
   const result = await fetchTalasea({
     fetchImpl,
     now: FIXED_NOW,
-    domUrl: "https://talasea.ir/geram18",
+    domUrl: "https://www.tgju.org/profile/geram18",
     domSelectors: ["[data-gold18]"],
   });
 
@@ -168,11 +202,27 @@ test("fetchTalasea falls back to DOM when JSON is invalid", async () => {
   assert.equal(fetchImpl.calls.length, 2);
 });
 
+test("fetchTalasea uses the configured 18-karat HTML fallback and unit", async () => {
+  const fetchImpl = createFetch([
+    mockResponse("{broken json", { url: SOURCE_URLS.talaseaJson }),
+    mockResponse('<span class="info-price">26,900,000</span>', {
+      url: SOURCE_URLS.gold18Html,
+    }),
+  ]);
+
+  const result = await fetchTalasea({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.prices, { gold18k: 26_900_000 });
+  assert.equal(result.meta.via, "dom");
+  assert.equal(fetchImpl.calls[1].url, SOURCE_URLS.gold18Html);
+  assert.equal(fetchImpl.calls.length, 2);
+});
+
 test("fetchTalasea reports the last path error with the first error as cause", async () => {
   const fetchImpl = createFetch([
     mockResponse("{broken json", { url: SOURCE_URLS.talaseaJson }),
     mockResponse("<html><body>no price</body></html>", {
-      url: "https://talasea.ir/geram18",
+      url: "https://www.tgju.org/profile/geram18",
     }),
   ]);
 
@@ -180,7 +230,7 @@ test("fetchTalasea reports the last path error with the first error as cause", a
     fetchTalasea({
       fetchImpl,
       now: FIXED_NOW,
-      domUrl: "https://talasea.ir/geram18",
+      domUrl: "https://www.tgju.org/profile/geram18",
       domSelectors: ["[data-gold18]"],
     }),
     (error) => {
@@ -205,6 +255,27 @@ test("fetchTalasea does not fall back on blocked responses", async () => {
     (error) => {
       assert.equal(error.code, "blocked");
       assert.equal(error.status, 403);
+      return true;
+    },
+  );
+
+  assert.equal(fetchImpl.calls.length, 1);
+});
+
+test("fetchTalasea rethrows original JSON error when DOM fallback is unconfigured", async () => {
+  const fetchImpl = createFetch([
+    mockResponse("broken", {
+      status: 500,
+      url: SOURCE_URLS.talaseaJson,
+    }),
+  ]);
+
+  await assert.rejects(
+    fetchTalasea({ fetchImpl, now: FIXED_NOW, domUrl: "", domSelectors: [] }),
+    (error) => {
+      assert.equal(error.code, "http");
+      assert.equal(error.status, 500);
+      assert.equal(error.cause, undefined);
       return true;
     },
   );
@@ -245,6 +316,23 @@ test("fetchTgju converts rial to toman and returns an integer", async () => {
   assert.equal(result.fetchedAt, FIXED_ISO);
   assert.ok(Number.isInteger(result.prices.gold24k));
   assert.equal(fetchImpl.calls.length, 1);
+});
+
+test("fetchTgju extracts 24-hour extrema only when the HTML has both values", async () => {
+  const html = `
+    <span data-col="info.last_trade.PDrCotVal">86,000,000</span>
+    <span data-col="info.max">90,000,000</span>
+    <span data-col="info.min">80,000,000</span>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse(html, { url: SOURCE_URLS.tgju }),
+  ]);
+
+  const result = await fetchTgju({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.ranges, {
+    gold24k: { high24h: 9_000_000, low24h: 8_000_000 },
+  });
 });
 
 test("fetchWithTimeout rejects an empty URL with config", async () => {
@@ -291,6 +379,68 @@ test("fetchWithTimeout rejects redirects to another host as blocked", async () =
       expectedHost: "api.wallex.ir",
     }),
     (error) => error.code === "blocked",
+  );
+});
+
+test("fetchWithTimeout validates each redirect before following it", async () => {
+  const fetchImpl = createFetch([
+    mockResponse("", {
+      status: 302,
+      url: "https://api.wallex.ir/v1/markets",
+      headers: { location: "https://evil.example/collect" },
+    }),
+  ]);
+
+  await assert.rejects(
+    fetchWithTimeout("https://api.wallex.ir/v1/markets", {
+      fetchImpl,
+      expectedHost: "api.wallex.ir",
+    }),
+    (error) => error.code === "blocked",
+  );
+
+  assert.equal(fetchImpl.calls.length, 1);
+});
+
+test("fetchWithTimeout stops redirect loops", async () => {
+  const url = "https://api.wallex.ir/v1/markets";
+  const fetchImpl = createFetch([
+    mockResponse("", {
+      status: 307,
+      url,
+      headers: { location: url },
+    }),
+  ]);
+
+  await assert.rejects(
+    fetchWithTimeout(url, {
+      fetchImpl,
+      expectedHost: "api.wallex.ir",
+    }),
+    (error) => error.code === "blocked",
+  );
+
+  assert.equal(fetchImpl.calls.length, 1);
+});
+
+test("fetchText applies its timeout to response body reading", async () => {
+  const fetchImpl = async () =>
+    new Response(
+      new ReadableStream({
+        pull() {
+          return new Promise(() => {});
+        },
+      }),
+      { status: 200 },
+    );
+
+  await assert.rejects(
+    fetchText("https://api.wallex.ir/v1/markets", {
+      fetchImpl,
+      expectedHost: "api.wallex.ir",
+      timeoutMs: 10,
+    }),
+    (error) => error.code === "timeout",
   );
 });
 

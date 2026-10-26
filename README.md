@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Tala
 
-## Getting Started
+A live dashboard for gold and currency prices, built with Next.js App Router.
 
-First, run the development server:
+## Requirements
+
+- Node.js 20.9 or later
+- npm
+
+## Install
+
+```bash
+npm install
+```
+
+## Configure the public site URL
+
+Set `NEXT_PUBLIC_SITE_URL` to the production origin (for example,
+`https://prices.example.com`) before building for deployment. This value is
+used as the metadata base URL, in the sitemap, and in the sitemap reference in
+`robots.txt`. On Vercel, `VERCEL_URL` is used as a fallback; in local
+development, the default is `http://localhost:3000`.
+
+## Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Build and run in production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+`npm start` runs Next.js using its built-in Node.js server. The project does not
+currently enable standalone output; this keeps the production start command
+consistent for standard Node.js hosts. If deploying with Docker, configure
+Next.js standalone output and run the generated `.next/standalone/server.js`
+instead.
 
-To learn more about Next.js, take a look at the following resources:
+## Other checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npm test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## SEO routes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/robots.txt` permits public pages and disallows crawling the prices API.
+- `/sitemap.xml` lists the public dashboard homepage when a production site URL
+  is configured.

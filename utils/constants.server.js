@@ -4,19 +4,18 @@ import "server-only";
  * Server-only data source configuration.
  *
  * Only this file and lib/scrapers/ may reference upstream provider names.
- * Any URL that could not be verified with a live request stays empty so the
- * corresponding scraper fails with ScraperError.code === "config".
+ * Unconfigured upstream URLs remain empty so the corresponding scraper fails
+ * with ScraperError.code === "config".
  *
- * @type {{ wallex: string, talaseaJson: string, talasea: string, tgju: string }}
+ * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string }}
  */
 export const SOURCE_URLS = {
   // Verified live: JSON market list, HTTP 200.
   wallex: "https://api.wallex.ir/v1/markets",
   // Verified live: JSON level prices, HTTP 200.
   talaseaJson: "https://alibaba-gateway.talasea.ir/level/prices",
-  // Not verified: the public HTML page answers with an ArvanCloud cookie
-  // challenge (HTTP 307 redirecting to itself). Do not bypass it.
-  talasea: "",
+  // HTML fallback for the 18-karat price.
+  gold18Html: "https://www.tgju.org/profile/geram18",
   // Verified live: HTML page, HTTP 200.
   tgju: "https://www.tgju.org/profile/geram24/today",
 };
@@ -25,12 +24,12 @@ export const SOURCE_URLS = {
  * Allowed response host per source. A redirect to any other host (or a
  * subdomain of it) is rejected with ScraperError.code === "blocked".
  *
- * @type {{ wallex: string, talaseaJson: string, talasea: string, tgju: string }}
+ * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string }}
  */
 export const EXPECTED_HOSTS = {
   wallex: "api.wallex.ir",
   talaseaJson: "alibaba-gateway.talasea.ir",
-  talasea: "talasea.ir",
+  gold18Html: "www.tgju.org",
   tgju: "www.tgju.org",
 };
 
@@ -74,12 +73,25 @@ export const TALASEA_JSON_PATH = ["data", "baseUnitPrice"];
 export const TALASEA_UNIT = "toman";
 
 /**
- * Verified DOM selectors for the HTML fallback, ordered by preference.
- * Empty because the live HTML page is behind a cookie challenge and no
- * selector could be verified. fetch() therefore returns "config".
+ * DOM selectors for the 18-karat HTML fallback, ordered by preference.
  * @type {string[]}
  */
-export const TALASEA_SELECTORS = [];
+export const TALASEA_SELECTORS = [".info-price"];
+
+/**
+ * Unit reported by the 18-karat HTML fallback.
+ * @type {"toman" | "rial"}
+ */
+export const TALASEA_HTML_UNIT = "toman";
+
+/**
+ * Selectors for optional 24-hour extrema in upstream HTML responses.
+ * @type {{ high: string[], low: string[] }}
+ */
+export const DAILY_EXTREMA_SELECTORS = {
+  high: ['[data-col="info.max"]'],
+  low: ['[data-col="info.min"]'],
+};
 
 /**
  * Unit reported by the verified TGJU page.

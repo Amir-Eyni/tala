@@ -1,5 +1,7 @@
 import { Vazirmatn } from "next/font/google";
+import Providers from "./providers";
 import "./globals.css";
+import { getSiteUrl } from "@/utils/siteUrl";
 
 const vazirmatn = Vazirmatn({
   variable: "--font-vazirmatn",
@@ -8,8 +10,24 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata = {
-  title: "طلا | نرخ لحظه‌ای طلا، دلار و تتر",
-  description: "داشبورد نرخ لحظه‌ای طلای ۱۸ و ۲۴ عیار، دلار و تتر در بازار ایران",
+  metadataBase: getSiteUrl() ?? undefined,
+  title: "نرخ لحظه‌ای طلا و ارز | داشبورد زنده",
+  description:
+    "قیمت لحظه‌ای طلای ۱۸ و ۲۴ عیار و ارزها را در یک داشبورد زنده و به‌روز دنبال کنید.",
+  openGraph: {
+    title: "نرخ لحظه‌ای طلا و ارز | داشبورد زنده",
+    description:
+      "قیمت لحظه‌ای طلای ۱۸ و ۲۴ عیار و ارزها را در یک داشبورد زنده و به‌روز دنبال کنید.",
+    siteName: "طلا | داشبورد زنده",
+    locale: "fa_IR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "نرخ لحظه‌ای طلا و ارز | داشبورد زنده",
+    description:
+      "قیمت لحظه‌ای طلای ۱۸ و ۲۴ عیار و ارزها را در یک داشبورد زنده و به‌روز دنبال کنید.",
+  },
 };
 
 // viewport-fit=cover is required for env(safe-area-inset-*) to be non-zero on iOS.
@@ -26,8 +44,10 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
-      <body className="min-h-dvh">{children}</body>
+    <html lang="fa" dir="rtl">
+      <body className={`${vazirmatn.variable} min-h-dvh`}>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

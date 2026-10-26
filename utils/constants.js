@@ -42,10 +42,10 @@ export const CURRENCY_LABEL = "تومان";
  * @type {Record<string, number>}
  */
 export const TTL_SECONDS = {
-  gold18k: 45,
-  gold24k: 60,
-  usd: 15,
-  usdt: 15,
+  gold18k: 14,
+  gold24k: 14,
+  usd: 14,
+  usdt: 14,
 };
 
 /**
@@ -79,13 +79,61 @@ export const STALE_TTL_MULTIPLIER = 3;
 export const SINGLE_FLIGHT_MAX_LOCK_MS = 15000;
 
 /**
+ * Minimum delay between retries after a failed group fetch.
+ * @type {number}
+ */
+export const MIN_RETRY_INTERVAL_MS = 5000;
+
+/**
+ * Consecutive failures required to open a group's circuit breaker.
+ * @type {number}
+ */
+export const BREAKER_FAILURE_THRESHOLD = 3;
+
+/**
+ * Time a circuit breaker stays open before one half-open trial.
+ * @type {number}
+ */
+export const BREAKER_COOLDOWN_MS = 60000;
+
+/**
+ * Maximum time a request with an empty cache waits for a cold fetch.
+ * @type {number}
+ */
+export const COLD_START_MAX_WAIT_MS = 7000;
+
+/**
+ * Hard deadline for one group fetch. Must stay below the single-flight lock.
+ * @type {number}
+ */
+export const GROUP_DEADLINE_MS = 12000;
+
+/**
  * Client-side price refetch interval.
  * @type {number}
  */
 export const CLIENT_REFETCH_INTERVAL_MS = 15000;
 
 /**
+ * Time before client-side price data is considered stale.
+ * @type {number}
+ */
+export const CLIENT_STALE_TIME_MS = 10000;
+
+/**
  * Duration of the price-change flash animation.
  * @type {number}
  */
 export const FLASH_DURATION_MS = 1500;
+
+/**
+ * Seconds for the Retry-After header on fallback responses.
+ * @type {number}
+ */
+export const RETRY_AFTER_SECONDS = 5;
+
+/**
+ * Maximum number of redirects to follow for scraper requests.
+ * @type {number}
+ */
+export const MAX_REDIRECTS = 3;

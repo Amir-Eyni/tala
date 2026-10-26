@@ -44,6 +44,8 @@ test("initial state is empty and fully unhealthy", () => {
       id,
       price: null,
       previousPrice: null,
+      high24h: null,
+      low24h: null,
       updatedAt: null,
       ageSeconds: null,
       ttlSeconds: TTL_SECONDS[id],
@@ -96,6 +98,27 @@ test("different prices move previousPrice while equal prices keep it", () => {
   assert.equal(state.previousPrice, 1_000);
   assert.equal(state.updatedAt, new Date(T0 + 2_000).toISOString());
   assert.equal(getLastGood("usd").updatedAt, T0 + 2_000);
+});
+
+test("cache retains only validated 24-hour extrema and expires them after a day", () => {
+  const range = { high24h: 1_200, low24h: 800 };
+  assert.equal(commitPrice("usd", 1_000, T0, range), true);
+
+  let state = getAssetState("usd", T0 + 1_000);
+  assert.equal(state.high24h, 1_200);
+  assert.equal(state.low24h, 800);
+
+  state = getAssetState("usd", T0 + 24 * 60 * 60 * 1000 + 1);
+  assert.equal(state.high24h, null);
+  assert.equal(state.low24h, null);
+
+  assert.equal(
+    commitPrice("usd", 1_000, T0, { high24h: 900, low24h: 800 }),
+    true,
+  );
+  state = getAssetState("usd", T0);
+  assert.equal(state.high24h, null);
+  assert.equal(state.low24h, null);
 });
 
 test("invalid commits return false without changing state", () => {

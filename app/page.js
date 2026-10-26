@@ -1,7 +1,17 @@
+import LiveHeader from "@/components/LiveHeader";
+import AssetRows from "@/components/AssetRows";
+import QuickConverter from "@/components/QuickConverter";
+import MinMaxTracker from "@/components/MinMaxTracker";
+import StatusFooter from "@/components/StatusFooter";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center text-center">
-      <p className="text-2xl font-semibold">پلتفرم طلا آماده است</p>
+    <main className="tala-page min-h-screen py-8">
+      <LiveHeader />
+      <AssetRows />
+      <QuickConverter />
+      <MinMaxTracker />
+      <StatusFooter />
     </main>
   );
 }
