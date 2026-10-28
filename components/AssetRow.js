@@ -73,31 +73,33 @@ export default function AssetRow({ asset }) {
         isStale ? "border-dashed border-warn" : "border-line"
       } ${flashClass}`}
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-4 sm:gap-6 sm:px-6 sm:py-row-y">
-        <h3 className="min-w-0 text-right font-semibold text-text sm:text-lg">
+      <div className="px-4 py-4 sm:px-4 lg:px-3 xl:px-4">
+        <h3 className="min-w-0 truncate text-right font-semibold text-text sm:text-lg lg:text-base xl:text-lg">
           {title}
         </h3>
 
-        <div className="text-center">
-          <p className="tala-row-price tala-numeric whitespace-nowrap font-bold text-text">
-            {formatToman(price)}
-          </p>
-          <p className="mt-1 text-xs text-muted sm:text-sm">
-            {asset?.unit === "گرم" ? "تومان / گرم" : "تومان"}
-          </p>
-        </div>
+        <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0 text-right">
+            <p className="tala-numeric whitespace-nowrap text-base font-bold text-text sm:text-lg lg:text-base xl:text-lg">
+              {formatToman(price)}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {asset?.unit === "گرم" ? "تومان / گرم" : "تومان"}
+            </p>
+          </div>
 
-        {hasPrice && hasFiniteChange && (
-          <p
-            className={`inline-flex min-w-20 items-center justify-center gap-1 rounded-pill px-3 py-1.5 text-sm font-semibold tala-numeric ${changeBadgeColor}`}
-            aria-label={`تغییر قیمت ${formatPercent(changePercent)}`}
-          >
-            {directionSymbol(direction) && (
-              <span aria-hidden="true">{directionSymbol(direction)}</span>
-            )}
-            <span>{formatPercent(changePercent)}</span>
-          </p>
-        )}
+          {hasPrice && hasFiniteChange && (
+            <p
+              className={`inline-flex shrink-0 items-center justify-center gap-1 rounded-pill px-2 py-1.5 text-xs font-semibold tala-numeric sm:px-3 sm:text-sm ${changeBadgeColor}`}
+              aria-label={`تغییر قیمت ${formatPercent(changePercent)}`}
+            >
+              {directionSymbol(direction) && (
+                <span aria-hidden="true">{directionSymbol(direction)}</span>
+              )}
+              <span>{formatPercent(changePercent)}</span>
+            </p>
+          )}
+        </div>
       </div>
 
       {isStale && (
