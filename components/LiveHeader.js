@@ -3,6 +3,7 @@
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
 import { formatTime } from "@/utils/formatPrice";
 import InstallPrompt from "@/components/InstallPrompt";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LiveHeader() {
   const { data, isFetching, isError } = useGoldPrices();
@@ -85,6 +86,7 @@ export default function LiveHeader() {
             </span>
           )}
         </div>
+        <ThemeToggle />
         <InstallPrompt />
       </div>
     </header>

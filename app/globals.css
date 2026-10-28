@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ==========================================================================
    Tala UI v3 — Design Tokens
-   Theme: yellow-navy · Dark first · Light follows prefers-color-scheme
+   Theme: yellow-navy · Light default · Dark follows the .dark class
    --------------------------------------------------------------------------
    Raw tokens live in --tala-* so they can be shared by Tailwind utilities,
    component classes and inline styles. Tailwind's public names are mapped
@@ -10,24 +12,24 @@
    ========================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Color — dark (default) */
-  --tala-bg: #0a1330;
-  --tala-surface: #112052;
-  --tala-surface-2: #172a66;
-  --tala-line: #27397a;
-  --tala-text: #f4f1e8;
-  --tala-muted: #9faedb;
+  /* Color — light */
+  --tala-bg: #f5f1e4;
+  --tala-surface: #ffffff;
+  --tala-surface-2: #eaf0ff;
+  --tala-line: #c9d3f0;
+  --tala-text: #0a1330;
+  --tala-muted: #4b5a8c;
   --tala-brand: #e8a800;
   --tala-on-brand: #0a1330;
-  --tala-up: #3ddc97;
-  --tala-down: #ff6b6b;
-  --tala-warn: #ffc93c;
+  --tala-up: #0e8f5b;
+  --tala-down: #c93636;
+  --tala-warn: #b07c00;
 
   /* Delta flash — painted on the whole AssetRow background */
-  --tala-flash-up: rgba(61, 220, 151, 0.28);
-  --tala-flash-down: rgba(255, 107, 107, 0.28);
+  --tala-flash-up: rgba(61, 220, 151, 0.18);
+  --tala-flash-down: rgba(255, 107, 107, 0.18);
   --tala-duration-flash: 1500ms;
 
   /* Typography */
@@ -64,31 +66,27 @@
   --tala-ease-live-pulse: ease-in-out;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
+:root.dark {
+  color-scheme: dark;
 
-    --tala-bg: #f5f1e4;
-    --tala-surface: #ffffff;
-    --tala-surface-2: #eaf0ff;
-    --tala-line: #c9d3f0;
-    --tala-text: #0a1330;
-    --tala-muted: #4b5a8c;
-    --tala-brand: #e8a800;
-    --tala-on-brand: #0a1330;
-    --tala-up: #0e8f5b;
-    --tala-down: #c93636;
-    --tala-warn: #b07c00;
+  --tala-bg: #0a1330;
+  --tala-surface: #112052;
+  --tala-surface-2: #172a66;
+  --tala-line: #27397a;
+  --tala-text: #f4f1e8;
+  --tala-muted: #9faedb;
+  --tala-up: #3ddc97;
+  --tala-down: #ff6b6b;
+  --tala-warn: #ffc93c;
 
-    --tala-flash-up: rgba(61, 220, 151, 0.18);
-    --tala-flash-down: rgba(255, 107, 107, 0.18);
-  }
+  --tala-flash-up: rgba(61, 220, 151, 0.28);
+  --tala-flash-down: rgba(255, 107, 107, 0.28);
 }
 
 /* --------------------------------------------------------------------------
    Tailwind v4 theme bridge
    @theme inline keeps utilities pointing at the live --tala-* values, so the
-   prefers-color-scheme block above automatically reskins every utility.
+   .dark class automatically reskins every utility.
    -------------------------------------------------------------------------- */
 @theme inline {
   /* Colors */

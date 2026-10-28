@@ -58,7 +58,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body className={`${vazirmatn.variable} min-h-dvh`}>
         <ServiceWorkerRegistration />
         <Providers>{children}</Providers>
