@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { FLASH_DURATION_MS } from "@/utils/constants";
 import {
-  calcChange,
   directionSymbol,
   formatPercent,
   formatToman,
@@ -18,15 +17,10 @@ export default function AssetRow({ asset }) {
     typeof price === "number" && Number.isFinite(price) && price >= 0;
   const previousPriceRef = useRef(price);
   const [flashDirection, setFlashDirection] = useState(null);
-  const previousPrice = asset?.previousPrice;
-  const hasValidPreviousPrice =
-    typeof previousPrice === "number" &&
-    Number.isFinite(previousPrice) &&
-    previousPrice > 0;
-  const hasFiniteChange = hasPrice && hasValidPreviousPrice;
-  const changePercent = hasFiniteChange
-    ? calcChange(price, previousPrice).percent
-    : null;
+  const hasFiniteChange =
+    typeof asset?.changePercent === "number" &&
+    Number.isFinite(asset.changePercent);
+  const changePercent = hasFiniteChange ? asset.changePercent : null;
   const direction =
     hasFiniteChange && changePercent > 0
       ? "up"

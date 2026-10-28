@@ -2,7 +2,6 @@
 
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
 import {
-  calcChange,
   directionSymbol,
   formatPercent,
   formatToman,
@@ -15,15 +14,10 @@ export default function HeroCard() {
     typeof gold?.price === "number" &&
     Number.isFinite(gold.price) &&
     gold.price >= 0;
-  const previousPrice = gold?.previousPrice;
-  const hasPreviousPrice =
-    typeof previousPrice === "number" &&
-    Number.isFinite(previousPrice) &&
-    previousPrice > 0;
-  const hasChange = hasPrice && hasPreviousPrice;
-  const changePercent = hasChange
-    ? calcChange(gold.price, previousPrice).percent
-    : null;
+  const hasChange =
+    typeof gold?.changePercent === "number" &&
+    Number.isFinite(gold.changePercent);
+  const changePercent = hasChange ? gold.changePercent : null;
   const direction =
     hasChange && changePercent > 0
       ? "up"

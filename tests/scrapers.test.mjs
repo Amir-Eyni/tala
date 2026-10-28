@@ -9,6 +9,7 @@ import {
 import {
   fetchWithTimeout,
   fetchText,
+  parseOptionalPercent,
   parsePrice,
   readTextLimited,
   ScraperError,
@@ -91,6 +92,12 @@ test("parsePrice rejects invalid and non-positive values", () => {
   }
 });
 
+test("parseOptionalPercent handles signed Persian and ASCII percentages", () => {
+  assert.equal(parseOptionalPercent("۱٫۲۵٪"), 1.25);
+  assert.equal(parseOptionalPercent("-0.75%"), -0.75);
+  assert.equal(parseOptionalPercent("not a percent"), null);
+});
+
 test("toTomanInteger converts rial with floor and toman with round", () => {
   assert.equal(toTomanInteger(86_000_000, "rial"), 8_600_000);
   assert.equal(toTomanInteger("۸۶٬۰۰۰٬۰۰۰", "rial"), 8_600_000);
@@ -135,6 +142,7 @@ test("fetchWallex exposes validated 24-hour extrema when upstream provides them"
     "280000.0000000000000000";
   payload.result.symbols.USDTTMN.stats["24h_lowPrice"] =
     "260000.0000000000000000";
+  payload.result.symbols.USDTTMN.stats["24h_ch"] = -1.25;
   const fetchImpl = createFetch([
     mockResponse(JSON.stringify(payload), { url: SOURCE_URLS.wallex }),
   ]);
@@ -145,6 +153,7 @@ test("fetchWallex exposes validated 24-hour extrema when upstream provides them"
     usdt: { high24h: 280_000, low24h: 260_000 },
     usd: { high24h: 280_000, low24h: 260_000 },
   });
+  assert.deepEqual(result.changePercent, { usdt: -1.25, usd: -1.25 });
 });
 
 test("talasea JSON path returns a toman integer per gram", () => {
@@ -157,7 +166,7 @@ test("fetchTalasea prefers JSON and reports via=json", async () => {
   const fetchImpl = createFetch([
     mockResponse(fixture("talasea.json"), { url: SOURCE_URLS.talaseaJson }),
     mockResponse(
-      `<table><tr><td>بالاترین قیمت روز</td><td><span>270,000,000</span></td></tr><tr><td>پایین ترین قیمت روز</td><td><span>260,000,000</span></td></tr></table>`,
+      `<table><tr><td>بالاترین قیمت روز</td><td><span>270,000,000</span></td></tr><tr><td>پایین ترین قیمت روز</td><td><span>260,000,000</span></td></tr><tr><td>درصد تغییر نسبت به روز گذشته</td><td>1.42%</td></tr></table>`,
       { url: SOURCE_URLS.gold18Html },
     ),
   ]);
@@ -168,6 +177,7 @@ test("fetchTalasea prefers JSON and reports via=json", async () => {
   assert.deepEqual(result.ranges, {
     gold18k: { high24h: 27_000_000, low24h: 26_000_000 },
   });
+  assert.deepEqual(result.changePercent, { gold18k: 1.42 });
   assert.equal(result.fetchedAt, FIXED_ISO);
   assert.equal(result.meta.via, "json");
   assert.ok(Number.isInteger(result.prices.gold18k));
@@ -180,6 +190,10 @@ test("fetchTalasea exposes optional validated 24-hour extrema", async () => {
   payload.data[0].low24h = 26_000_000;
   const fetchImpl = createFetch([
     mockResponse(JSON.stringify(payload), { url: SOURCE_URLS.talaseaJson }),
+    mockResponse(
+      '<span data-col="info.last_trade.last_change_percentage">-0.75</span>',
+      { url: SOURCE_URLS.gold18Html },
+    ),
   ]);
 
   const result = await fetchTalasea({ fetchImpl, now: FIXED_NOW });
@@ -187,6 +201,7 @@ test("fetchTalasea exposes optional validated 24-hour extrema", async () => {
   assert.deepEqual(result.ranges, {
     gold18k: { high24h: 27_500_000, low24h: 26_000_000 },
   });
+  assert.deepEqual(result.changePercent, { gold18k: -0.75 });
 });
 
 test("fetchTalasea falls back to DOM when JSON is invalid", async () => {
@@ -202,6 +217,7 @@ test("fetchTalasea falls back to DOM when JSON is invalid", async () => {
     now: FIXED_NOW,
     domUrl: "https://www.tgju.org/profile/geram18",
     domSelectors: ["[data-gold18]"],
+    domUnit: "toman",
   });
 
   assert.deepEqual(result.prices, { gold18k: 26_900_000 });
@@ -212,14 +228,20 @@ test("fetchTalasea falls back to DOM when JSON is invalid", async () => {
 test("fetchTalasea uses the configured 18-karat HTML fallback and unit", async () => {
   const fetchImpl = createFetch([
     mockResponse("{broken json", { url: SOURCE_URLS.talaseaJson }),
-    mockResponse('<span class="info-price">26,900,000</span>', {
+    mockResponse(
+      '<span data-col="info.last_trade.PDrCotVal">269,000,000</span><table><tr><td>بالاترین قیمت روز</td><td>270,000,000</td></tr><tr><td>پایین ترین قیمت روز</td><td>260,000,000</td></tr></table>',
+      {
       url: SOURCE_URLS.gold18Html,
-    }),
+      },
+    ),
   ]);
 
   const result = await fetchTalasea({ fetchImpl, now: FIXED_NOW });
 
   assert.deepEqual(result.prices, { gold18k: 26_900_000 });
+  assert.deepEqual(result.ranges, {
+    gold18k: { high24h: 27_000_000, low24h: 26_000_000 },
+  });
   assert.equal(result.meta.via, "dom");
   assert.equal(fetchImpl.calls[1].url, SOURCE_URLS.gold18Html);
   assert.equal(fetchImpl.calls.length, 2);
@@ -239,6 +261,7 @@ test("fetchTalasea reports the last path error with the first error as cause", a
       now: FIXED_NOW,
       domUrl: "https://www.tgju.org/profile/geram18",
       domSelectors: ["[data-gold18]"],
+      domUnit: "toman",
     }),
     (error) => {
       assert.equal(error.code, "parse");
@@ -328,6 +351,7 @@ test("fetchTgju converts rial to toman and returns an integer", async () => {
 test("fetchTgju extracts 24-hour extrema only when the HTML has both values", async () => {
   const html = `
     <span data-col="info.last_trade.PDrCotVal">86,000,000</span>
+    <span data-col="info.last_trade.last_change_percentage">-1.25</span>
     <table>
       <tr><td>بالاترین قیمت روز</td><td><span>90,000,000</span></td></tr>
       <tr><td>پایین ترین قیمت روز</td><td><span>80,000,000</span></td></tr>
@@ -342,6 +366,7 @@ test("fetchTgju extracts 24-hour extrema only when the HTML has both values", as
   assert.deepEqual(result.ranges, {
     gold24k: { high24h: 9_000_000, low24h: 8_000_000 },
   });
+  assert.deepEqual(result.changePercent, { gold24k: -1.25 });
 });
 
 test("fetchWithTimeout rejects an empty URL with config", async () => {

@@ -146,8 +146,8 @@ test("cold start fetches all groups and returns a healthy payload", async () => 
   assert.equal(payload.updatedAt, new Date(T0).toISOString());
   assert.equal(payload.assets.usd.price, BASE_PRICES.usd);
   assert.equal(payload.assets.usdt.price, BASE_PRICES.usdt);
-  assert.equal(payload.assets.usd.changePercent, 0);
-  assert.equal(payload.assets.usdt.changePercent, 0);
+  assert.equal(payload.assets.usd.changePercent, undefined);
+  assert.equal(payload.assets.usdt.changePercent, undefined);
   assert.notEqual(payload.assets.usd, payload.assets.usdt);
   assert.equal(payload.assets.usd.isStale, false);
   assert.equal(payload.assets.usdt.isStale, false);
@@ -164,6 +164,7 @@ test("payload includes validated upstream 24-hour extrema when available", async
             usdt: { high24h: 110_000, low24h: 90_000 },
             usd: { high24h: 110_000, low24h: 90_000 },
           },
+          changePercent: { usdt: 1.25, usd: 1.25 },
         },
       ),
     gold18: async ({ now }) =>
@@ -174,6 +175,7 @@ test("payload includes validated upstream 24-hour extrema when available", async
           ranges: {
             gold18k: { high24h: 5_500_000, low24h: 4_500_000 },
           },
+          changePercent: { gold18k: -2.5 },
         },
       ),
     gold24: async ({ now }) =>
@@ -184,6 +186,7 @@ test("payload includes validated upstream 24-hour extrema when available", async
           ranges: {
             gold24k: { high24h: 7_000_000, low24h: 6_000_000 },
           },
+          changePercent: { gold24k: 0.75 },
         },
       ),
   });
@@ -199,6 +202,23 @@ test("payload includes validated upstream 24-hour extrema when available", async
   assert.deepEqual(payload.assets.gold24k.high24h, 7_000_000);
   assert.deepEqual(payload.assets.usd.high24h, 110_000);
   assert.deepEqual(payload.assets.usdt.low24h, 90_000);
+  assert.equal(payload.assets.gold18k.changePercent, -2.5);
+  assert.equal(payload.assets.gold24k.changePercent, 0.75);
+  assert.equal(payload.assets.usd.changePercent, 1.25);
+  assert.equal(payload.assets.usdt.changePercent, 1.25);
+});
+
+test("missing upstream extrema fall back to the current price in the API", async () => {
+  const { payload } = await resolvePrices({
+    now: T0,
+    registry: createRegistry(),
+    coldStartMaxWaitMs: 200,
+  });
+
+  for (const assetId of ASSET_IDS) {
+    assert.equal(payload.assets[assetId].high24h, payload.assets[assetId].price);
+    assert.equal(payload.assets[assetId].low24h, payload.assets[assetId].price);
+  }
 });
 
 test("a second request inside TTL does not call any scraper", async () => {
@@ -248,6 +268,7 @@ test("stale-while-revalidate returns old data and then applies the new price", a
         return resultFor(
           { usdt: BASE_PRICES.usdt, usd: BASE_PRICES.usd },
           now,
+          { changePercent: { usdt: 0.5, usd: 0.5 } },
         );
       }
 
@@ -257,6 +278,7 @@ test("stale-while-revalidate returns old data and then applies the new price", a
             resultFor(
               { usdt: BASE_PRICES.usdt + 10, usd: BASE_PRICES.usd + 10 },
               now,
+              { changePercent: { usdt: 1.25, usd: 1.25 } },
             ),
           );
       });
@@ -295,11 +317,11 @@ test("stale-while-revalidate returns old data and then applies the new price", a
   assert.equal(next.refresh, null);
   assert.equal(next.payload.assets.usd.price, BASE_PRICES.usd + 10);
   assert.equal(next.payload.assets.usd.previousPrice, BASE_PRICES.usd);
-  assert.equal(next.payload.assets.usd.changePercent, 0.01);
+  assert.equal(next.payload.assets.usd.changePercent, 1.25);
   assert.equal(next.payload.assets.usd.isStale, false);
 });
 
-test("percentage change resets on unchanged successful price refreshes", async () => {
+test("price changes without source percentage do not create a local percentage", async () => {
   let currentPrice = BASE_PRICES.usd;
   const registry = oneGroupRegistry(async ({ now }) =>
     resultFor({ usd: currentPrice }, now),
@@ -321,7 +343,7 @@ test("percentage change resets on unchanged successful price refreshes", async (
     coldStartMaxWaitMs: 200,
   });
   assert.equal(changedPayload.payload.assets.usd.previousPrice, BASE_PRICES.usd);
-  assert.equal(changedPayload.payload.assets.usd.changePercent, 0.01);
+  assert.equal(changedPayload.payload.assets.usd.changePercent, undefined);
 
   const unchangedRefresh = await resolvePrices({
     now: T0 + 32_000,
@@ -336,7 +358,7 @@ test("percentage change resets on unchanged successful price refreshes", async (
     coldStartMaxWaitMs: 200,
   });
   assert.equal(unchangedPayload.payload.assets.usd.previousPrice, currentPrice);
-  assert.equal(unchangedPayload.payload.assets.usd.changePercent, 0);
+  assert.equal(unchangedPayload.payload.assets.usd.changePercent, undefined);
 });
 
 test("500 concurrent cold requests share one fetch per group", async () => {
@@ -487,12 +509,11 @@ test("buildOfflinePayload returns full contract shape and order", () => {
       "unit",
       "price",
       "previousPrice",
-      "changePercent",
       "isStale",
     ]);
     assert.equal(payload.assets[assetId].price, null);
     assert.equal(payload.assets[assetId].previousPrice, null);
-    assert.equal(payload.assets[assetId].changePercent, 0);
+    assert.equal(payload.assets[assetId].changePercent, undefined);
     assert.equal(payload.assets[assetId].isStale, true);
   }
 });
@@ -573,7 +594,7 @@ test("outliers are rejected and become acceptable outside the outlier window", a
   const afterRejection = buildPayload(rejectedAt);
   assert.equal(afterRejection.assets.usd.price, 1_000);
   assert.equal(afterRejection.assets.usd.isStale, true);
-  assert.equal(afterRejection.assets.usd.changePercent, 0);
+  assert.equal(afterRejection.assets.usd.changePercent, undefined);
   assert.equal(getAssetState("usd", rejectedAt).lastErrorCode, "outlier");
 
   const acceptedAt = T0 + 61_000;
@@ -587,7 +608,7 @@ test("outliers are rejected and become acceptable outside the outlier window", a
   const afterAcceptance = buildPayload(acceptedAt);
   assert.equal(afterAcceptance.assets.usd.price, 1_200);
   assert.equal(afterAcceptance.assets.usd.previousPrice, 1_000);
-  assert.equal(afterAcceptance.assets.usd.changePercent, 20);
+  assert.equal(afterAcceptance.assets.usd.changePercent, undefined);
   assert.equal(afterAcceptance.assets.usd.isStale, false);
 });
 
@@ -789,7 +810,8 @@ test("payload has the exact whitelist shape and order", async () => {
       "unit",
       "price",
       "previousPrice",
-      "changePercent",
+      "high24h",
+      "low24h",
       "isStale",
     ]);
   }

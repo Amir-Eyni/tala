@@ -18,7 +18,7 @@ function createPayload(status = "healthy") {
           unit: id.startsWith("gold") ? "گرم" : "واحد",
           price: status === "offline" ? null : 1_000,
           previousPrice: status === "offline" ? null : 990,
-          changePercent: status === "offline" ? 0 : 1.01,
+          ...(status === "offline" ? {} : { changePercent: 1.01 }),
           isStale: status !== "healthy",
         },
       ]),
@@ -74,6 +74,32 @@ test("fetchPrices accepts optional valid 24-hour extrema", async () => {
     async () => Response.json(payload),
     async () => {
       assert.deepEqual(await fetchPrices(), payload);
+    },
+  );
+});
+
+test("fetchPrices accepts payloads without an upstream percentage", async () => {
+  const payload = createPayload();
+  for (const asset of Object.values(payload.assets)) {
+    delete asset.changePercent;
+  }
+
+  await withFetch(
+    async () => Response.json(payload),
+    async () => {
+      assert.deepEqual(await fetchPrices(), payload);
+    },
+  );
+});
+
+test("fetchPrices rejects a malformed upstream percentage", async () => {
+  const payload = createPayload();
+  payload.assets.gold18k.changePercent = "1.25";
+
+  await withFetch(
+    async () => Response.json(payload),
+    async () => {
+      await assert.rejects(fetchPrices(), /invalid response/i);
     },
   );
 });

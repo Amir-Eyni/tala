@@ -12,7 +12,7 @@ export default function AssetRows() {
   }
 
   return (
-    <section aria-label="سایر دارایی‌ها" className="mt-row-gap space-y-row-gap">
+    <section aria-label="دارایی‌ها" className="mt-row-gap space-y-row-gap">
       {assets.map(([assetId, asset]) => (
         <AssetRow key={assetId} asset={asset} />
       ))}

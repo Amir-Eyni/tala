@@ -46,8 +46,9 @@ function isPricePayload(value) {
       typeof asset.unit === "string" &&
       isPrice(asset.price) &&
       isPrice(asset.previousPrice) &&
-      typeof asset.changePercent === "number" &&
-      Number.isFinite(asset.changePercent) &&
+      (!Object.hasOwn(asset, "changePercent") ||
+        (typeof asset.changePercent === "number" &&
+          Number.isFinite(asset.changePercent))) &&
       typeof asset.isStale === "boolean" &&
       hasValidExtrema
     );

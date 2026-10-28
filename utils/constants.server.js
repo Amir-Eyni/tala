@@ -73,16 +73,18 @@ export const TALASEA_JSON_PATH = ["data", "baseUnitPrice"];
 export const TALASEA_UNIT = "toman";
 
 /**
- * DOM selectors for the 18-karat HTML fallback, ordered by preference.
+ * DOM selector for the 18-karat quote on the profile HTML fallback.
  * @type {string[]}
  */
-export const TALASEA_SELECTORS = [".info-price"];
+export const TALASEA_SELECTORS = [
+  '[data-col="info.last_trade.PDrCotVal"]',
+];
 
 /**
- * Unit reported by the 18-karat HTML fallback.
+ * Unit reported by the 18-karat profile HTML fallback.
  * @type {"toman" | "rial"}
  */
-export const TALASEA_HTML_UNIT = "toman";
+export const TALASEA_HTML_UNIT = "rial";
 
 /**
  * Selectors for optional 24-hour extrema in upstream HTML responses.
