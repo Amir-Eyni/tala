@@ -26,10 +26,10 @@ export default function HeroCard() {
         : "flat";
   const changeColor =
     direction === "up"
-      ? "text-up"
+      ? "bg-surface-2 text-up"
       : direction === "down"
-        ? "text-down"
-        : "text-muted";
+        ? "bg-surface-2 text-down"
+        : "bg-surface-2 text-text";
   const isStale = gold?.isStale === true;
 
   return (
@@ -55,7 +55,7 @@ export default function HeroCard() {
 
       {hasPrice && hasChange && (
         <p
-          className={`mt-4 inline-flex items-center gap-2 rounded-pill bg-surface-2 px-4 py-2 font-semibold tala-numeric ${changeColor}`}
+          className={`mt-4 inline-flex items-center gap-2 rounded-pill px-4 py-2 font-semibold tala-numeric ${changeColor}`}
           aria-label={`تغییر قیمت ${formatPercent(changePercent)}`}
         >
           {directionSymbol(direction) && (

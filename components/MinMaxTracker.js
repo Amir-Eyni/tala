@@ -5,8 +5,11 @@ import { formatToman } from "@/utils/formatPrice";
 
 const TRACKED_ASSETS = [
   { id: "gold18k", title: "طلای ۱۸ عیار" },
+  { id: "coin", title: "سکه تمام امامی" },
   { id: "gold24k", title: "طلای ۲۴ عیار" },
+  { id: "silver", title: "نقره" },
   { id: "usdt", title: "تتر" },
+  { id: "euro", title: "یورو" },
   { id: "usd", title: "دلار" },
 ];
 

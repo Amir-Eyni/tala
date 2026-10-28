@@ -1,6 +1,8 @@
 # Tala
 
 A live dashboard for gold and currency prices, built with Next.js App Router.
+It includes 18k/24k gold, Emami coins, silver, USDT, USD, and EUR with live
+percentage changes, 24-hour ranges, and a currency-to-metal converter.
 
 ## Requirements
 

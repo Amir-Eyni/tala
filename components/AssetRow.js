@@ -27,12 +27,12 @@ export default function AssetRow({ asset }) {
       : hasFiniteChange && changePercent < 0
         ? "down"
         : "flat";
-  const directionColor =
+  const changeBadgeColor =
     direction === "up"
-      ? "text-up"
+      ? "bg-surface-2 text-up"
       : direction === "down"
-        ? "text-down"
-        : "text-muted";
+        ? "bg-surface-2 text-down"
+        : "bg-surface-2 text-text";
   const isStale = asset?.isStale === true;
   const title = asset?.id === "usd" ? "دلار" : asset?.title;
 
@@ -89,7 +89,7 @@ export default function AssetRow({ asset }) {
 
         {hasPrice && hasFiniteChange && (
           <p
-            className={`inline-flex min-w-20 items-center justify-center gap-1 rounded-pill bg-surface-2 px-3 py-1.5 text-sm font-semibold tala-numeric ${directionColor}`}
+            className={`inline-flex min-w-20 items-center justify-center gap-1 rounded-pill px-3 py-1.5 text-sm font-semibold tala-numeric ${changeBadgeColor}`}
             aria-label={`تغییر قیمت ${formatPercent(changePercent)}`}
           >
             {directionSymbol(direction) && (

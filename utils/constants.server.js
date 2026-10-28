@@ -7,7 +7,7 @@ import "server-only";
  * Unconfigured upstream URLs remain empty so the corresponding scraper fails
  * with ScraperError.code === "config".
  *
- * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string }}
+ * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string, tgjuDollar: string, tgjuEuro: string, tgjuSilver: string, tgjuCoin: string, noghresea: string }}
  */
 export const SOURCE_URLS = {
   // Verified live: JSON market list, HTTP 200.
@@ -18,19 +18,29 @@ export const SOURCE_URLS = {
   gold18Html: "https://www.tgju.org/profile/geram18",
   // Profile statistics include the current price and daily high/low rows.
   tgju: "https://www.tgju.org/profile/geram24",
+  tgjuDollar: "https://www.tgju.org/profile/price_dollar_rl",
+  tgjuEuro: "https://www.tgju.org/profile/price_eur",
+  tgjuSilver: "https://www.tgju.org/profile/silver_999",
+  tgjuCoin: "https://www.tgju.org/profile/sekee",
+  noghresea: "https://noghresea.ir/",
 };
 
 /**
  * Allowed response host per source. A redirect to any other host (or a
  * subdomain of it) is rejected with ScraperError.code === "blocked".
  *
- * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string }}
+ * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string, tgjuDollar: string, tgjuEuro: string, tgjuSilver: string, tgjuCoin: string, noghresea: string }}
  */
 export const EXPECTED_HOSTS = {
   wallex: "api.wallex.ir",
   talaseaJson: "alibaba-gateway.talasea.ir",
   gold18Html: "www.tgju.org",
   tgju: "www.tgju.org",
+  tgjuDollar: "www.tgju.org",
+  tgjuEuro: "www.tgju.org",
+  tgjuSilver: "www.tgju.org",
+  tgjuCoin: "www.tgju.org",
+  noghresea: "noghresea.ir",
 };
 
 /**

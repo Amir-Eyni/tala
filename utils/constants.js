@@ -2,7 +2,15 @@
  * Supported asset identifiers in display order.
  * @type {string[]}
  */
-export const ASSET_IDS = ["gold18k", "gold24k", "usd", "usdt"];
+export const ASSET_IDS = [
+  "gold18k",
+  "coin",
+  "gold24k",
+  "silver",
+  "usd",
+  "usdt",
+  "euro",
+];
 
 /**
  * Public metadata for every supported asset.
@@ -14,9 +22,19 @@ export const ASSETS = {
     title: "طلای ۱۸ عیار",
     unit: "گرم",
   },
+  coin: {
+    id: "coin",
+    title: "سکه تمام امامی",
+    unit: "عدد",
+  },
   gold24k: {
     id: "gold24k",
     title: "طلای ۲۴ عیار",
+    unit: "گرم",
+  },
+  silver: {
+    id: "silver",
+    title: "نقره",
     unit: "گرم",
   },
   usd: {
@@ -27,6 +45,11 @@ export const ASSETS = {
   usdt: {
     id: "usdt",
     title: "تتر (USDT)",
+    unit: "واحد",
+  },
+  euro: {
+    id: "euro",
+    title: "یورو",
     unit: "واحد",
   },
 };
@@ -43,9 +66,12 @@ export const CURRENCY_LABEL = "تومان";
  */
 export const TTL_SECONDS = {
   gold18k: 14,
+  coin: 14,
   gold24k: 14,
+  silver: 14,
   usd: 14,
   usdt: 14,
+  euro: 14,
 };
 
 /**

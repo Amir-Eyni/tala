@@ -11,8 +11,12 @@ const amountFormatter = new Intl.NumberFormat("fa-IR", {
 
 const CONVERTIBLE_ASSETS = [
   { id: "gold18k", title: "گرم طلای ۱۸ عیار", unit: "گرم" },
+  { id: "coin", title: "سکه تمام امامی", unit: "سکه" },
   { id: "gold24k", title: "گرم طلای ۲۴ عیار", unit: "گرم" },
+  { id: "silver", title: "گرم نقره", unit: "گرم" },
+  { id: "usdt", title: "تتر (USDT)", unit: "تتر" },
   { id: "usd", title: "دلار", unit: "دلار" },
+  { id: "euro", title: "یورو", unit: "یورو" },
 ];
 
 function cleanTomanInput(value) {
@@ -158,7 +162,7 @@ export default function QuickConverter() {
 
       <div
         aria-live="polite"
-        className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3"
+        className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
       >
         {CONVERTIBLE_ASSETS.map(({ id, title, unit }) => {
           const price = assets[id]?.price;
@@ -174,7 +178,9 @@ export default function QuickConverter() {
             >
               <h3 className="text-sm font-semibold text-muted">{title}</h3>
               <p className="mt-2 text-lg font-bold text-text tala-numeric">
-                {equivalent === null ? "—" : amountFormatter.format(equivalent)}
+                {equivalent === null
+                  ? "—"
+                  : amountFormatter.format(equivalent).replace(/\u066b/g, ".")}
                 <span className="mr-1 text-sm font-medium text-muted">
                   {unit}
                 </span>

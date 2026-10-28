@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { ASSET_IDS } from "../utils/constants.js";
+import { directionSymbol, formatPercent } from "../utils/formatPrice.js";
 import { fetchPrices } from "../utils/pricesClient.js";
 
 function createPayload(status = "healthy") {
@@ -90,6 +91,25 @@ test("fetchPrices accepts payloads without an upstream percentage", async () => 
       assert.deepEqual(await fetchPrices(), payload);
     },
   );
+});
+
+test("fetchPrices accepts zero as a valid upstream percentage", async () => {
+  const payload = createPayload();
+  for (const asset of Object.values(payload.assets)) {
+    asset.changePercent = 0;
+  }
+
+  await withFetch(
+    async () => Response.json(payload),
+    async () => {
+      assert.deepEqual(await fetchPrices(), payload);
+    },
+  );
+});
+
+test("zero percentage has a visible neutral label and horizontal marker", () => {
+  assert.equal(formatPercent(0), "۰٫۰۰٪");
+  assert.equal(directionSymbol("flat"), "−");
 });
 
 test("fetchPrices rejects a malformed upstream percentage", async () => {

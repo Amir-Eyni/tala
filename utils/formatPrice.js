@@ -89,21 +89,21 @@ export function calcChange(current, previous) {
  * Format a percentage with Persian digits, two decimals, and a percent sign.
  *
  * @param {number} percent - Percentage value to display.
- * @returns {string} Formatted absolute percentage, or an em dash for invalid input.
+ * @returns {string} Formatted signed percentage, or an em dash for invalid input.
  */
 export function formatPercent(percent) {
   if (typeof percent !== "number" || !Number.isFinite(percent)) {
     return DASH;
   }
 
-  return `${percentFormatter.format(Math.abs(percent))}٪`;
+  return `${percentFormatter.format(percent)}٪`;
 }
 
 /**
  * Return the visual direction symbol for a price change.
  *
  * @param {"up" | "down" | "flat" | string} direction - Change direction.
- * @returns {string} Up/down arrow, or an empty string for flat/unknown values.
+ * @returns {string} Up/down arrow, neutral bar, or an empty string for unknown values.
  */
 export function directionSymbol(direction) {
   if (direction === "up") {
@@ -112,6 +112,10 @@ export function directionSymbol(direction) {
 
   if (direction === "down") {
     return "▼";
+  }
+
+  if (direction === "flat") {
+    return "−";
   }
 
   return "";

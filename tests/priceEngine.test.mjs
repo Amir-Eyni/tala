@@ -23,13 +23,17 @@ import {
   SINGLE_FLIGHT_MAX_LOCK_MS,
   TTL_SECONDS,
 } from "../utils/constants.js";
+import { changePercentSchema } from "../lib/validator.js";
 
 const T0 = 1_700_000_000_000;
 const BASE_PRICES = {
   usdt: 100_000,
   usd: 100_000,
   gold18k: 5_000_000,
+  coin: 267_340_000,
   gold24k: 6_650_000,
+  silver: 600_000,
+  euro: 300_000,
 };
 
 function deferred() {
@@ -55,14 +59,19 @@ function createRegistry(overrides = {}) {
   return [
     {
       id: "fx",
-      assets: ["usdt", "usd"],
+      assets: ["usdt"],
       fetch:
         overrides.fx ??
         (async ({ now }) =>
-          resultFor(
-            { usdt: BASE_PRICES.usdt, usd: BASE_PRICES.usd },
-            now,
-          )),
+          resultFor({ usdt: BASE_PRICES.usdt }, now)),
+    },
+    {
+      id: "usd",
+      assets: ["usd"],
+      fetch:
+        overrides.usd ??
+        (async ({ now }) =>
+          resultFor({ usd: BASE_PRICES.usd }, now)),
     },
     {
       id: "gold18",
@@ -73,12 +82,36 @@ function createRegistry(overrides = {}) {
           resultFor({ gold18k: BASE_PRICES.gold18k }, now)),
     },
     {
+      id: "coin",
+      assets: ["coin"],
+      fetch:
+        overrides.coin ??
+        (async ({ now }) =>
+          resultFor({ coin: BASE_PRICES.coin }, now)),
+    },
+    {
       id: "gold24",
       assets: ["gold24k"],
       fetch:
         overrides.gold24 ??
         (async ({ now }) =>
           resultFor({ gold24k: BASE_PRICES.gold24k }, now)),
+    },
+    {
+      id: "silver",
+      assets: ["silver"],
+      fetch:
+        overrides.silver ??
+        (async ({ now }) =>
+          resultFor({ silver: BASE_PRICES.silver }, now)),
+    },
+    {
+      id: "euro",
+      assets: ["euro"],
+      fetch:
+        overrides.euro ??
+        (async ({ now }) =>
+          resultFor({ euro: BASE_PRICES.euro }, now)),
     },
   ];
 }
@@ -101,7 +134,7 @@ test("registry contains every asset once with neutral group ids", () => {
   assert.equal(Object.isFrozen(SCRAPER_REGISTRY), true);
   assert.deepEqual(
     SCRAPER_REGISTRY.map((group) => group.id),
-    ["fx", "gold18", "gold24"],
+    ["fx", "usd", "gold18", "coin", "gold24", "silver", "euro"],
   );
 
   const seen = [];
@@ -115,6 +148,12 @@ test("registry contains every asset once with neutral group ids", () => {
   for (const assetId of ASSET_IDS) {
     assert.equal(seen.filter((value) => value === assetId).length, 1);
   }
+});
+
+test("change-percent validation accepts zero and rejects non-finite values", () => {
+  assert.equal(changePercentSchema.safeParse(0).success, true);
+  assert.equal(changePercentSchema.safeParse(Number.NaN).success, false);
+  assert.equal(changePercentSchema.safeParse(Number.POSITIVE_INFINITY).success, false);
 });
 
 test("group deadline stays below the single-flight lock", () => {
@@ -146,6 +185,9 @@ test("cold start fetches all groups and returns a healthy payload", async () => 
   assert.equal(payload.updatedAt, new Date(T0).toISOString());
   assert.equal(payload.assets.usd.price, BASE_PRICES.usd);
   assert.equal(payload.assets.usdt.price, BASE_PRICES.usdt);
+  assert.equal(payload.assets.euro.price, BASE_PRICES.euro);
+  assert.equal(payload.assets.silver.price, BASE_PRICES.silver);
+  assert.equal(payload.assets.coin.price, BASE_PRICES.coin);
   assert.equal(payload.assets.usd.changePercent, undefined);
   assert.equal(payload.assets.usdt.changePercent, undefined);
   assert.notEqual(payload.assets.usd, payload.assets.usdt);
@@ -157,14 +199,22 @@ test("payload includes validated upstream 24-hour extrema when available", async
   const registry = createRegistry({
     fx: async ({ now }) =>
       resultFor(
-        { usdt: BASE_PRICES.usdt, usd: BASE_PRICES.usd },
+        { usdt: BASE_PRICES.usdt },
         now,
         {
           ranges: {
             usdt: { high24h: 110_000, low24h: 90_000 },
-            usd: { high24h: 110_000, low24h: 90_000 },
           },
-          changePercent: { usdt: 1.25, usd: 1.25 },
+          changePercent: { usdt: 1.25 },
+        },
+      ),
+    usd: async ({ now }) =>
+      resultFor(
+        { usd: BASE_PRICES.usd },
+        now,
+        {
+          ranges: { usd: { high24h: 110_000, low24h: 90_000 } },
+          changePercent: { usd: 1.25 },
         },
       ),
     gold18: async ({ now }) =>
@@ -178,6 +228,17 @@ test("payload includes validated upstream 24-hour extrema when available", async
           changePercent: { gold18k: -2.5 },
         },
       ),
+    coin: async ({ now }) =>
+      resultFor(
+        { coin: BASE_PRICES.coin },
+        now,
+        {
+          ranges: {
+            coin: { high24h: 270_000_000, low24h: 265_000_000 },
+          },
+          changePercent: { coin: 0.52 },
+        },
+      ),
     gold24: async ({ now }) =>
       resultFor(
         { gold24k: BASE_PRICES.gold24k },
@@ -186,7 +247,25 @@ test("payload includes validated upstream 24-hour extrema when available", async
           ranges: {
             gold24k: { high24h: 7_000_000, low24h: 6_000_000 },
           },
-          changePercent: { gold24k: 0.75 },
+          changePercent: { gold24k: 0 },
+        },
+      ),
+    silver: async ({ now }) =>
+      resultFor(
+        { silver: BASE_PRICES.silver },
+        now,
+        {
+          ranges: { silver: { high24h: 620_000, low24h: 580_000 } },
+          changePercent: { silver: -1.1 },
+        },
+      ),
+    euro: async ({ now }) =>
+      resultFor(
+        { euro: BASE_PRICES.euro },
+        now,
+        {
+          ranges: { euro: { high24h: 310_000, low24h: 290_000 } },
+          changePercent: { euro: -0.3 },
         },
       ),
   });
@@ -199,13 +278,22 @@ test("payload includes validated upstream 24-hour extrema when available", async
 
   assert.deepEqual(payload.assets.gold18k.high24h, 5_500_000);
   assert.deepEqual(payload.assets.gold18k.low24h, 4_500_000);
+  assert.deepEqual(payload.assets.coin.high24h, 270_000_000);
+  assert.deepEqual(payload.assets.coin.low24h, 265_000_000);
   assert.deepEqual(payload.assets.gold24k.high24h, 7_000_000);
   assert.deepEqual(payload.assets.usd.high24h, 110_000);
   assert.deepEqual(payload.assets.usdt.low24h, 90_000);
+  assert.deepEqual(payload.assets.euro.high24h, 310_000);
+  assert.deepEqual(payload.assets.euro.low24h, 290_000);
+  assert.deepEqual(payload.assets.silver.high24h, 620_000);
+  assert.deepEqual(payload.assets.silver.low24h, 580_000);
   assert.equal(payload.assets.gold18k.changePercent, -2.5);
-  assert.equal(payload.assets.gold24k.changePercent, 0.75);
+  assert.equal(payload.assets.coin.changePercent, 0.52);
+  assert.equal(payload.assets.gold24k.changePercent, 0);
   assert.equal(payload.assets.usd.changePercent, 1.25);
   assert.equal(payload.assets.usdt.changePercent, 1.25);
+  assert.equal(payload.assets.euro.changePercent, -0.3);
+  assert.equal(payload.assets.silver.changePercent, -1.1);
 });
 
 test("missing upstream extrema fall back to the current price in the API", async () => {
@@ -222,22 +310,43 @@ test("missing upstream extrema fall back to the current price in the API", async
 });
 
 test("a second request inside TTL does not call any scraper", async () => {
-  const calls = { fx: 0, gold18: 0, gold24: 0 };
+  const calls = {
+    fx: 0,
+    usd: 0,
+    gold18: 0,
+    coin: 0,
+    gold24: 0,
+    silver: 0,
+    euro: 0,
+  };
   const registry = createRegistry({
     fx: async ({ now }) => {
       calls.fx += 1;
-      return resultFor(
-        { usdt: BASE_PRICES.usdt, usd: BASE_PRICES.usd },
-        now,
-      );
+      return resultFor({ usdt: BASE_PRICES.usdt }, now);
     },
     gold18: async ({ now }) => {
       calls.gold18 += 1;
       return resultFor({ gold18k: BASE_PRICES.gold18k }, now);
     },
+    coin: async ({ now }) => {
+      calls.coin += 1;
+      return resultFor({ coin: BASE_PRICES.coin }, now);
+    },
+    usd: async ({ now }) => {
+      calls.usd += 1;
+      return resultFor({ usd: BASE_PRICES.usd }, now);
+    },
     gold24: async ({ now }) => {
       calls.gold24 += 1;
       return resultFor({ gold24k: BASE_PRICES.gold24k }, now);
+    },
+    silver: async ({ now }) => {
+      calls.silver += 1;
+      return resultFor({ silver: BASE_PRICES.silver }, now);
+    },
+    euro: async ({ now }) => {
+      calls.euro += 1;
+      return resultFor({ euro: BASE_PRICES.euro }, now);
     },
   });
 
@@ -254,7 +363,15 @@ test("a second request inside TTL does not call any scraper", async () => {
     coldStartMaxWaitMs: 200,
   });
 
-  assert.deepEqual(calls, { fx: 1, gold18: 1, gold24: 1 });
+  assert.deepEqual(calls, {
+    fx: 1,
+    usd: 1,
+    gold18: 1,
+    coin: 1,
+    gold24: 1,
+    silver: 1,
+    euro: 1,
+  });
   assert.equal(second.refresh, null);
   assert.equal(second.payload.assets.usd.price, BASE_PRICES.usd);
 });
@@ -263,12 +380,12 @@ test("stale-while-revalidate returns old data and then applies the new price", a
   let mode = "initial";
   let release;
   const registry = createRegistry({
-    fx: async ({ now }) => {
+    usd: async ({ now }) => {
       if (mode === "initial") {
         return resultFor(
-          { usdt: BASE_PRICES.usdt, usd: BASE_PRICES.usd },
+          { usd: BASE_PRICES.usd },
           now,
-          { changePercent: { usdt: 0.5, usd: 0.5 } },
+          { changePercent: { usd: 0.5 } },
         );
       }
 
@@ -276,9 +393,9 @@ test("stale-while-revalidate returns old data and then applies the new price", a
         release = () =>
           resolve(
             resultFor(
-              { usdt: BASE_PRICES.usdt + 10, usd: BASE_PRICES.usd + 10 },
+              { usd: BASE_PRICES.usd + 10 },
               now,
-              { changePercent: { usdt: 1.25, usd: 1.25 } },
+              { changePercent: { usd: 1.25 } },
             ),
           );
       });
@@ -362,22 +479,43 @@ test("price changes without source percentage do not create a local percentage",
 });
 
 test("500 concurrent cold requests share one fetch per group", async () => {
-  const calls = { fx: 0, gold18: 0, gold24: 0 };
+  const calls = {
+    fx: 0,
+    usd: 0,
+    gold18: 0,
+    coin: 0,
+    gold24: 0,
+    silver: 0,
+    euro: 0,
+  };
   const registry = createRegistry({
     fx: async ({ now }) => {
       calls.fx += 1;
-      return resultFor(
-        { usdt: BASE_PRICES.usdt, usd: BASE_PRICES.usd },
-        now,
-      );
+      return resultFor({ usdt: BASE_PRICES.usdt }, now);
     },
     gold18: async ({ now }) => {
       calls.gold18 += 1;
       return resultFor({ gold18k: BASE_PRICES.gold18k }, now);
     },
+    coin: async ({ now }) => {
+      calls.coin += 1;
+      return resultFor({ coin: BASE_PRICES.coin }, now);
+    },
+    usd: async ({ now }) => {
+      calls.usd += 1;
+      return resultFor({ usd: BASE_PRICES.usd }, now);
+    },
     gold24: async ({ now }) => {
       calls.gold24 += 1;
       return resultFor({ gold24k: BASE_PRICES.gold24k }, now);
+    },
+    silver: async ({ now }) => {
+      calls.silver += 1;
+      return resultFor({ silver: BASE_PRICES.silver }, now);
+    },
+    euro: async ({ now }) => {
+      calls.euro += 1;
+      return resultFor({ euro: BASE_PRICES.euro }, now);
     },
   });
 
@@ -386,7 +524,15 @@ test("500 concurrent cold requests share one fetch per group", async () => {
   );
   const responses = await Promise.all(requests);
 
-  assert.deepEqual(calls, { fx: 1, gold18: 1, gold24: 1 });
+  assert.deepEqual(calls, {
+    fx: 1,
+    usd: 1,
+    gold18: 1,
+    coin: 1,
+    gold24: 1,
+    silver: 1,
+    euro: 1,
+  });
   for (const response of responses) {
     assert.equal(response.payload.assets.usd.price, BASE_PRICES.usd);
   }
@@ -397,9 +543,11 @@ test("one failing group does not block the others and preserves old prices", asy
   const registry = createRegistry({
     fx: async ({ now }) =>
       resultFor(
-        { usdt: BASE_PRICES.usdt + 1, usd: BASE_PRICES.usd + 1 },
+        { usdt: BASE_PRICES.usdt + 1 },
         now,
       ),
+    usd: async ({ now }) =>
+      resultFor({ usd: BASE_PRICES.usd + 1 }, now),
     gold18: async ({ now }) => {
       if (failGold18) {
         throw engineError("network");
@@ -463,8 +611,20 @@ test("all cold failures produce an offline payload and a 503", async () => {
     gold18: async () => {
       throw engineError("blocked");
     },
+    coin: async () => {
+      throw engineError("network");
+    },
     gold24: async () => {
       throw engineError("http");
+    },
+    usd: async () => {
+      throw engineError("network");
+    },
+    euro: async () => {
+      throw engineError("network");
+    },
+    silver: async () => {
+      throw engineError("network");
     },
   });
 

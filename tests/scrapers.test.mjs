@@ -27,7 +27,16 @@ import {
 import {
   fetchTgju,
   parseTgjuHtml,
+  scrapeTgjuDollar,
+  scrapeTgjuEuro,
+  scrapeTgjuSilver,
+  scrapeTgjuCoin,
 } from "../lib/scrapers/tgju.js";
+import {
+  parseNoghreseaSilverHtml,
+  scrapeNoghreseaSilver,
+} from "../lib/scrapers/noghresea.js";
+import { SCRAPER_REGISTRY } from "../lib/scrapers/index.js";
 
 const FIXED_NOW = new Date("2026-10-23T10:00:00.000Z");
 const FIXED_ISO = FIXED_NOW.toISOString();
@@ -122,16 +131,16 @@ test("wallex parser reads the requested symbol and returns an integer", () => {
   );
 });
 
-test("fetchWallex returns equal integer usd/usdt prices and an ISO timestamp", async () => {
+test("fetchWallex returns the integer tether price and an ISO timestamp", async () => {
   const fetchImpl = createFetch([
     mockResponse(fixture("wallex.json"), { url: SOURCE_URLS.wallex }),
   ]);
 
   const result = await fetchWallex({ fetchImpl, now: FIXED_NOW });
 
-  assert.deepEqual(result.prices, { usdt: 273_102, usd: 273_102 });
+  assert.deepEqual(result.prices, { usdt: 273_102 });
+  assert.deepEqual(result.changePercent, { usdt: 0 });
   assert.equal(result.fetchedAt, FIXED_ISO);
-  assert.ok(Number.isInteger(result.prices.usd));
   assert.ok(Number.isInteger(result.prices.usdt));
   assert.equal(fetchImpl.calls.length, 1);
 });
@@ -151,9 +160,8 @@ test("fetchWallex exposes validated 24-hour extrema when upstream provides them"
 
   assert.deepEqual(result.ranges, {
     usdt: { high24h: 280_000, low24h: 260_000 },
-    usd: { high24h: 280_000, low24h: 260_000 },
   });
-  assert.deepEqual(result.changePercent, { usdt: -1.25, usd: -1.25 });
+  assert.deepEqual(result.changePercent, { usdt: -1.25 });
 });
 
 test("talasea JSON path returns a toman integer per gram", () => {
@@ -242,6 +250,7 @@ test("fetchTalasea uses the configured 18-karat HTML fallback and unit", async (
   assert.deepEqual(result.ranges, {
     gold18k: { high24h: 27_000_000, low24h: 26_000_000 },
   });
+  assert.deepEqual(result.changePercent, { gold18k: 0 });
   assert.equal(result.meta.via, "dom");
   assert.equal(fetchImpl.calls[1].url, SOURCE_URLS.gold18Html);
   assert.equal(fetchImpl.calls.length, 2);
@@ -343,6 +352,7 @@ test("fetchTgju converts rial to toman and returns an integer", async () => {
   const result = await fetchTgju({ fetchImpl, now: FIXED_NOW });
 
   assert.deepEqual(result.prices, { gold24k: 8_600_000 });
+  assert.deepEqual(result.changePercent, { gold24k: 0 });
   assert.equal(result.fetchedAt, FIXED_ISO);
   assert.ok(Number.isInteger(result.prices.gold24k));
   assert.equal(fetchImpl.calls.length, 1);
@@ -367,6 +377,167 @@ test("fetchTgju extracts 24-hour extrema only when the HTML has both values", as
     gold24k: { high24h: 9_000_000, low24h: 8_000_000 },
   });
   assert.deepEqual(result.changePercent, { gold24k: -1.25 });
+});
+
+test("scrapeTgjuDollar converts quote and extrema from rial to toman", async () => {
+  const html = `
+    <span data-col="info.last_trade.PDrCotVal">2,710,000</span>
+    <span data-col="info.last_trade.last_change_percentage">-0.45</span>
+    <table>
+      <tr><td>بالاترین قیمت روز</td><td><span>2,800,000</span></td></tr>
+      <tr><td>پایین ترین قیمت روز</td><td><span>2,600,000</span></td></tr>
+    </table>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse(html, { url: SOURCE_URLS.tgjuDollar }),
+  ]);
+
+  const result = await scrapeTgjuDollar({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.prices, { usd: 271_000 });
+  assert.deepEqual(result.ranges, {
+    usd: { high24h: 280_000, low24h: 260_000 },
+  });
+  assert.deepEqual(result.changePercent, { usd: -0.45 });
+  assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuDollar);
+});
+
+test("scrapeTgjuEuro converts quote and extrema from rial to toman", async () => {
+  const html = `
+    <span data-col="info.last_trade.PDrCotVal">2,998,700</span>
+    <span data-col="info.last_trade.last_change_percentage">0.27</span>
+    <table>
+      <tr><td>بالاترین قیمت روز</td><td><span>3,012,800</span></td></tr>
+      <tr><td>پایین ترین قیمت روز</td><td><span>2,990,400</span></td></tr>
+    </table>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse(html, { url: SOURCE_URLS.tgjuEuro }),
+  ]);
+
+  const result = await scrapeTgjuEuro({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.prices, { euro: 299_870 });
+  assert.deepEqual(result.ranges, {
+    euro: { high24h: 301_280, low24h: 299_040 },
+  });
+  assert.deepEqual(result.changePercent, { euro: 0.27 });
+  assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuEuro);
+});
+
+test("scrapeTgjuCoin converts rial quote and daily range to toman", async () => {
+  const html = `
+    <span data-col="info.last_trade.PDrCotVal">2,673,400,000</span>
+    <span data-col="info.last_trade.last_change_percentage">0.52</span>
+    <table>
+      <tr><td>بالاترین قیمت روز</td><td>2,680,400,000</td></tr>
+      <tr><td>پایین ترین قیمت روز</td><td>2,672,300,000</td></tr>
+    </table>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse(html, { url: SOURCE_URLS.tgjuCoin }),
+  ]);
+
+  const result = await scrapeTgjuCoin({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.prices, { coin: 267_340_000 });
+  assert.deepEqual(result.ranges, {
+    coin: { high24h: 268_040_000, low24h: 267_230_000 },
+  });
+  assert.deepEqual(result.changePercent, { coin: 0.52 });
+  assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuCoin);
+});
+
+test("scrapeTgjuSilver converts prices and parses suffix-signed percentages", async () => {
+  const html = `
+    <span class="value" data-col="info.price">598,200</span>
+    <span data-col="info.change_percent">1.25-</span>
+    <span data-col="info.high">605,000</span>
+    <span data-col="info.low">592,000</span>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse(html, { url: SOURCE_URLS.tgjuSilver }),
+  ]);
+
+  const result = await scrapeTgjuSilver({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.prices, { silver: 59_820 });
+  assert.deepEqual(result.ranges, {
+    silver: { high24h: 60_500, low24h: 59_200 },
+  });
+  assert.deepEqual(result.changePercent, { silver: -1.25 });
+  assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuSilver);
+});
+
+test("parseNoghreseaSilverHtml parses and normalizes a rial quote", () => {
+  const html = `
+    <div class="silver-prices" data-currency="ریال">
+      <span data-col="info.price">5,982,000</span>
+      <span data-col="info.high">6,050,000</span>
+      <span data-col="info.low">5,920,000</span>
+      <span data-col="info.change_percent">0.85+</span>
+    </div>
+  `;
+
+  assert.deepEqual(parseNoghreseaSilverHtml(html), {
+    price: 598_200,
+    high24h: 605_000,
+    low24h: 592_000,
+    changePercent: 0.85,
+  });
+});
+
+test("scrapeNoghreseaSilver rejects missing fields and unidentified currency", async () => {
+  const missingFieldFetch = createFetch([
+    mockResponse(
+      '<span data-col="info.price">598,200</span>',
+      { url: SOURCE_URLS.noghresea },
+    ),
+  ]);
+  await assert.rejects(
+    scrapeNoghreseaSilver({ fetchImpl: missingFieldFetch }),
+    (error) => error.code === "parse",
+  );
+});
+
+test("silver registry falls back to TGJU when primary source redirects in a loop", async () => {
+  const fallbackHtml = `
+    <span data-col="info.last_trade.PDrCotVal">5,017,700</span>
+    <span data-col="info.last_trade.last_change_percentage">0.92</span>
+    <table>
+      <tr><td>بالاترین قیمت روز</td><td>5,029,900</td></tr>
+      <tr><td>پایین ترین قیمت روز</td><td>4,916,700</td></tr>
+    </table>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse("", {
+      status: 307,
+      url: SOURCE_URLS.noghresea,
+      headers: { Location: SOURCE_URLS.noghresea },
+    }),
+    mockResponse(fallbackHtml, { url: SOURCE_URLS.tgjuSilver }),
+  ]);
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (...args) => warnings.push(args.join(" "));
+
+  try {
+    const silverGroup = SCRAPER_REGISTRY.find(
+      (group) => group.id === "silver",
+    );
+    const result = await silverGroup.fetch({ fetchImpl, now: FIXED_NOW });
+
+    assert.deepEqual(result.prices, { silver: 501_770 });
+    assert.deepEqual(result.ranges, {
+      silver: { high24h: 502_990, low24h: 491_670 },
+    });
+    assert.deepEqual(result.changePercent, { silver: 0.92 });
+    assert.equal(fetchImpl.calls.length, 2);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0], /backup/);
+  } finally {
+    console.warn = originalWarn;
+  }
 });
 
 test("fetchWithTimeout rejects an empty URL with config", async () => {
