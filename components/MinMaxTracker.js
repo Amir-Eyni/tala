@@ -48,7 +48,7 @@ export default function MinMaxTracker() {
 
           return (
             <article
-              className="rounded-xl border border-line bg-[#131b33] p-4 text-right"
+              className="rounded-xl border border-line bg-surface p-4 text-right"
               key={id}
             >
               <h3 className="font-semibold text-text">{title}</h3>
