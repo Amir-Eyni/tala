@@ -27,9 +27,9 @@ export default function LiveHeader() {
   const updatedAt = data?.updatedAt ? formatTime(data.updatedAt) : "—";
 
   return (
-    <header className="relative flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="pt-12 text-right sm:pt-0">
-        <h1 className="text-xl font-bold text-text sm:text-2xl">
+    <header className="flex w-full flex-row items-start justify-between gap-2 border-b border-line pb-5 sm:items-center">
+      <div className="min-w-0 flex-1 text-right">
+        <h1 className="text-lg font-bold text-text sm:text-2xl">
           نرخ لحظه‌ای طلا و ارز
         </h1>
         <p
@@ -40,8 +40,8 @@ export default function LiveHeader() {
         </p>
       </div>
 
-      <div className="absolute left-0 top-0 flex max-w-full flex-wrap items-center gap-x-3 gap-y-2 self-start text-sm sm:static sm:self-auto">
-        <div className="flex items-center gap-2">
+      <div className="flex shrink-0 flex-nowrap items-center gap-2 text-sm sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <span
             aria-hidden="true"
             className={`size-2.5 rounded-full ${indicatorColor} ${
@@ -64,16 +64,16 @@ export default function LiveHeader() {
             <>
               <span
                 aria-hidden="true"
-                className="size-4 animate-spin rounded-full border-2 border-muted border-t-brand"
+                className="hidden size-4 animate-spin rounded-full border-2 border-muted border-t-brand sm:inline-block"
               />
-              <span className="text-muted" role="status">
+              <span className="hidden text-muted sm:inline" role="status">
                 در حال به‌روزرسانی...
               </span>
             </>
           )}
 
           {isUnavailable && !isError && (
-            <span className="text-muted" role="status">
+            <span className="hidden text-muted sm:inline" role="status">
               {data
                 ? "آخرین داده معتبر در حال نمایش است"
                 : "در انتظار دریافت داده"}
@@ -81,7 +81,7 @@ export default function LiveHeader() {
           )}
 
           {isError && (
-            <span className="text-red-500" role="status">
+            <span className="hidden text-red-500 sm:inline" role="status">
               دریافت داده ناموفق بود
             </span>
           )}

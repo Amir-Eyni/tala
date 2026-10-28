@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
-    name: "نرخ لحظه‌ای طلا، سکه و ارز",
-    short_name: "نرخ طلا و ارز",
+    name: "cfm tala",
+    short_name: "cfm tala",
     description: "داشبورد زنده قیمت طلا، سکه و ارز",
     start_url: "/",
     scope: "/",

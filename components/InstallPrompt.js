@@ -120,6 +120,7 @@ export default function InstallPrompt() {
   return (
     <>
       <button
+        aria-label="نصب وب‌اپ"
         className="inline-flex min-h-9 items-center gap-1.5 rounded-control border border-brand/50 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand transition hover:bg-brand/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:text-sm"
         onClick={installEvent ? handleInstallClick : openInstructions}
         type="button"
@@ -138,7 +139,7 @@ export default function InstallPrompt() {
             strokeWidth="1.8"
           />
         </svg>
-        نصب وب‌اپ
+        <span className="hidden sm:inline">نصب وب‌اپ</span>
       </button>
 
       {showInstructions && (
