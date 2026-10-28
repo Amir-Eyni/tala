@@ -4,8 +4,9 @@ import { useGoldPrices } from "@/app/hooks/useGoldPrices";
 import { formatToman } from "@/utils/formatPrice";
 
 const TRACKED_ASSETS = [
-  { id: "gold18k", title: "طلای ۱۸ عیار" },
   { id: "coin", title: "سکه تمام امامی" },
+  { id: "bahar", title: "سکه بهار آزادی" },
+  { id: "gold18k", title: "طلای ۱۸ عیار" },
   { id: "gold24k", title: "طلای ۲۴ عیار" },
   { id: "silver", title: "نقره" },
   { id: "usdt", title: "تتر" },

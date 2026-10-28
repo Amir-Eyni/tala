@@ -31,11 +31,8 @@ import {
   scrapeTgjuEuro,
   scrapeTgjuSilver,
   scrapeTgjuCoin,
+  scrapeTgjuBahar,
 } from "../lib/scrapers/tgju.js";
-import {
-  parseNoghreseaSilverHtml,
-  scrapeNoghreseaSilver,
-} from "../lib/scrapers/noghresea.js";
 import { SCRAPER_REGISTRY } from "../lib/scrapers/index.js";
 
 const FIXED_NOW = new Date("2026-10-23T10:00:00.000Z");
@@ -448,7 +445,32 @@ test("scrapeTgjuCoin converts rial quote and daily range to toman", async () => 
   assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuCoin);
 });
 
+test("scrapeTgjuBahar converts rial quote and daily range to toman", async () => {
+  const html = `
+    <span data-col="info.price">2,501,400,000</span>
+    <span data-col="info.change_percent">0.38</span>
+    <span data-col="info.high">2,510,000,000</span>
+    <span data-col="info.low">2,495,000,000</span>
+  `;
+  const fetchImpl = createFetch([
+    mockResponse(html, { url: SOURCE_URLS.tgjuBahar }),
+  ]);
+
+  const result = await scrapeTgjuBahar({ fetchImpl, now: FIXED_NOW });
+
+  assert.deepEqual(result.prices, { bahar: 250_140_000 });
+  assert.deepEqual(result.ranges, {
+    bahar: { high24h: 251_000_000, low24h: 249_500_000 },
+  });
+  assert.deepEqual(result.changePercent, { bahar: 0.38 });
+  assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuBahar);
+});
+
 test("scrapeTgjuSilver converts prices and parses suffix-signed percentages", async () => {
+  assert.equal(
+    SCRAPER_REGISTRY.find((group) => group.id === "silver")?.fetch,
+    scrapeTgjuSilver,
+  );
   const html = `
     <span class="value" data-col="info.price">598,200</span>
     <span data-col="info.change_percent">1.25-</span>
@@ -467,77 +489,6 @@ test("scrapeTgjuSilver converts prices and parses suffix-signed percentages", as
   });
   assert.deepEqual(result.changePercent, { silver: -1.25 });
   assert.equal(fetchImpl.calls[0].url, SOURCE_URLS.tgjuSilver);
-});
-
-test("parseNoghreseaSilverHtml parses and normalizes a rial quote", () => {
-  const html = `
-    <div class="silver-prices" data-currency="ریال">
-      <span data-col="info.price">5,982,000</span>
-      <span data-col="info.high">6,050,000</span>
-      <span data-col="info.low">5,920,000</span>
-      <span data-col="info.change_percent">0.85+</span>
-    </div>
-  `;
-
-  assert.deepEqual(parseNoghreseaSilverHtml(html), {
-    price: 598_200,
-    high24h: 605_000,
-    low24h: 592_000,
-    changePercent: 0.85,
-  });
-});
-
-test("scrapeNoghreseaSilver rejects missing fields and unidentified currency", async () => {
-  const missingFieldFetch = createFetch([
-    mockResponse(
-      '<span data-col="info.price">598,200</span>',
-      { url: SOURCE_URLS.noghresea },
-    ),
-  ]);
-  await assert.rejects(
-    scrapeNoghreseaSilver({ fetchImpl: missingFieldFetch }),
-    (error) => error.code === "parse",
-  );
-});
-
-test("silver registry falls back to TGJU when primary source redirects in a loop", async () => {
-  const fallbackHtml = `
-    <span data-col="info.last_trade.PDrCotVal">5,017,700</span>
-    <span data-col="info.last_trade.last_change_percentage">0.92</span>
-    <table>
-      <tr><td>بالاترین قیمت روز</td><td>5,029,900</td></tr>
-      <tr><td>پایین ترین قیمت روز</td><td>4,916,700</td></tr>
-    </table>
-  `;
-  const fetchImpl = createFetch([
-    mockResponse("", {
-      status: 307,
-      url: SOURCE_URLS.noghresea,
-      headers: { Location: SOURCE_URLS.noghresea },
-    }),
-    mockResponse(fallbackHtml, { url: SOURCE_URLS.tgjuSilver }),
-  ]);
-  const warnings = [];
-  const originalWarn = console.warn;
-  console.warn = (...args) => warnings.push(args.join(" "));
-
-  try {
-    const silverGroup = SCRAPER_REGISTRY.find(
-      (group) => group.id === "silver",
-    );
-    const result = await silverGroup.fetch({ fetchImpl, now: FIXED_NOW });
-
-    assert.deepEqual(result.prices, { silver: 501_770 });
-    assert.deepEqual(result.ranges, {
-      silver: { high24h: 502_990, low24h: 491_670 },
-    });
-    assert.deepEqual(result.changePercent, { silver: 0.92 });
-    assert.equal(fetchImpl.calls.length, 2);
-    assert.equal(warnings.length, 1);
-    assert.match(warnings[0], /backup/);
-  } finally {
-    console.warn = originalWarn;
-  }
 });
 
 test("fetchWithTimeout rejects an empty URL with config", async () => {

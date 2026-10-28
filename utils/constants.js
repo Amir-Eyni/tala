@@ -3,8 +3,9 @@
  * @type {string[]}
  */
 export const ASSET_IDS = [
-  "gold18k",
   "coin",
+  "bahar",
+  "gold18k",
   "gold24k",
   "silver",
   "usd",
@@ -25,6 +26,11 @@ export const ASSETS = {
   coin: {
     id: "coin",
     title: "سکه تمام امامی",
+    unit: "عدد",
+  },
+  bahar: {
+    id: "bahar",
+    title: "سکه بهار آزادی",
     unit: "عدد",
   },
   gold24k: {
@@ -67,6 +73,7 @@ export const CURRENCY_LABEL = "تومان";
 export const TTL_SECONDS = {
   gold18k: 14,
   coin: 14,
+  bahar: 14,
   gold24k: 14,
   silver: 14,
   usd: 14,

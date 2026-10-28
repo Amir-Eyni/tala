@@ -2,6 +2,7 @@
 
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
 import { formatTime } from "@/utils/formatPrice";
+import InstallPrompt from "@/components/InstallPrompt";
 
 export default function LiveHeader() {
   const { data, isFetching, isError } = useGoldPrices();
@@ -38,50 +39,53 @@ export default function LiveHeader() {
         </p>
       </div>
 
-      <div className="flex items-center gap-2 self-start text-sm sm:self-auto">
-        <span
-          aria-hidden="true"
-          className={`size-2.5 rounded-full ${indicatorColor} ${
-            isHealthy ? "animate-live-pulse" : ""
-          }`}
-        />
-        <span
-          className={
-            isError
-              ? "font-semibold text-red-500"
-              : isUnavailable
-                ? "font-semibold text-yellow-500"
-                : "font-semibold text-up"
-          }
-        >
-          {statusLabel}
-        </span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 self-start text-sm sm:self-auto">
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className={`size-2.5 rounded-full ${indicatorColor} ${
+              isHealthy ? "animate-live-pulse" : ""
+            }`}
+          />
+          <span
+            className={
+              isError
+                ? "font-semibold text-red-500"
+                : isUnavailable
+                  ? "font-semibold text-yellow-500"
+                  : "font-semibold text-up"
+            }
+          >
+            {statusLabel}
+          </span>
 
-        {isFetching && isHealthy && (
-          <>
-            <span
-              aria-hidden="true"
-              className="size-4 animate-spin rounded-full border-2 border-muted border-t-brand"
-            />
+          {isFetching && isHealthy && (
+            <>
+              <span
+                aria-hidden="true"
+                className="size-4 animate-spin rounded-full border-2 border-muted border-t-brand"
+              />
+              <span className="text-muted" role="status">
+                در حال به‌روزرسانی...
+              </span>
+            </>
+          )}
+
+          {isUnavailable && !isError && (
             <span className="text-muted" role="status">
-              در حال به‌روزرسانی...
+              {data
+                ? "آخرین داده معتبر در حال نمایش است"
+                : "در انتظار دریافت داده"}
             </span>
-          </>
-        )}
+          )}
 
-        {isUnavailable && !isError && (
-          <span className="text-muted" role="status">
-            {data
-              ? "آخرین داده معتبر در حال نمایش است"
-              : "در انتظار دریافت داده"}
-          </span>
-        )}
-
-        {isError && (
-          <span className="text-red-500" role="status">
-            دریافت داده ناموفق بود
-          </span>
-        )}
+          {isError && (
+            <span className="text-red-500" role="status">
+              دریافت داده ناموفق بود
+            </span>
+          )}
+        </div>
+        <InstallPrompt />
       </div>
     </header>
   );

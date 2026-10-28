@@ -10,8 +10,9 @@ const amountFormatter = new Intl.NumberFormat("fa-IR", {
 });
 
 const CONVERTIBLE_ASSETS = [
-  { id: "gold18k", title: "گرم طلای ۱۸ عیار", unit: "گرم" },
   { id: "coin", title: "سکه تمام امامی", unit: "سکه" },
+  { id: "bahar", title: "سکه بهار آزادی", unit: "سکه" },
+  { id: "gold18k", title: "گرم طلای ۱۸ عیار", unit: "گرم" },
   { id: "gold24k", title: "گرم طلای ۲۴ عیار", unit: "گرم" },
   { id: "silver", title: "گرم نقره", unit: "گرم" },
   { id: "usdt", title: "تتر (USDT)", unit: "تتر" },

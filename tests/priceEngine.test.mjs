@@ -31,6 +31,7 @@ const BASE_PRICES = {
   usd: 100_000,
   gold18k: 5_000_000,
   coin: 267_340_000,
+  bahar: 250_140_000,
   gold24k: 6_650_000,
   silver: 600_000,
   euro: 300_000,
@@ -90,6 +91,14 @@ function createRegistry(overrides = {}) {
           resultFor({ coin: BASE_PRICES.coin }, now)),
     },
     {
+      id: "bahar",
+      assets: ["bahar"],
+      fetch:
+        overrides.bahar ??
+        (async ({ now }) =>
+          resultFor({ bahar: BASE_PRICES.bahar }, now)),
+    },
+    {
       id: "gold24",
       assets: ["gold24k"],
       fetch:
@@ -134,7 +143,7 @@ test("registry contains every asset once with neutral group ids", () => {
   assert.equal(Object.isFrozen(SCRAPER_REGISTRY), true);
   assert.deepEqual(
     SCRAPER_REGISTRY.map((group) => group.id),
-    ["fx", "usd", "gold18", "coin", "gold24", "silver", "euro"],
+    ["fx", "usd", "gold18", "coin", "bahar", "gold24", "silver", "euro"],
   );
 
   const seen = [];
@@ -188,6 +197,7 @@ test("cold start fetches all groups and returns a healthy payload", async () => 
   assert.equal(payload.assets.euro.price, BASE_PRICES.euro);
   assert.equal(payload.assets.silver.price, BASE_PRICES.silver);
   assert.equal(payload.assets.coin.price, BASE_PRICES.coin);
+  assert.equal(payload.assets.bahar.price, BASE_PRICES.bahar);
   assert.equal(payload.assets.usd.changePercent, undefined);
   assert.equal(payload.assets.usdt.changePercent, undefined);
   assert.notEqual(payload.assets.usd, payload.assets.usdt);
@@ -239,6 +249,17 @@ test("payload includes validated upstream 24-hour extrema when available", async
           changePercent: { coin: 0.52 },
         },
       ),
+    bahar: async ({ now }) =>
+      resultFor(
+        { bahar: BASE_PRICES.bahar },
+        now,
+        {
+          ranges: {
+            bahar: { high24h: 252_000_000, low24h: 248_000_000 },
+          },
+          changePercent: { bahar: -0.18 },
+        },
+      ),
     gold24: async ({ now }) =>
       resultFor(
         { gold24k: BASE_PRICES.gold24k },
@@ -280,6 +301,8 @@ test("payload includes validated upstream 24-hour extrema when available", async
   assert.deepEqual(payload.assets.gold18k.low24h, 4_500_000);
   assert.deepEqual(payload.assets.coin.high24h, 270_000_000);
   assert.deepEqual(payload.assets.coin.low24h, 265_000_000);
+  assert.deepEqual(payload.assets.bahar.high24h, 252_000_000);
+  assert.deepEqual(payload.assets.bahar.low24h, 248_000_000);
   assert.deepEqual(payload.assets.gold24k.high24h, 7_000_000);
   assert.deepEqual(payload.assets.usd.high24h, 110_000);
   assert.deepEqual(payload.assets.usdt.low24h, 90_000);
@@ -289,6 +312,7 @@ test("payload includes validated upstream 24-hour extrema when available", async
   assert.deepEqual(payload.assets.silver.low24h, 580_000);
   assert.equal(payload.assets.gold18k.changePercent, -2.5);
   assert.equal(payload.assets.coin.changePercent, 0.52);
+  assert.equal(payload.assets.bahar.changePercent, -0.18);
   assert.equal(payload.assets.gold24k.changePercent, 0);
   assert.equal(payload.assets.usd.changePercent, 1.25);
   assert.equal(payload.assets.usdt.changePercent, 1.25);
@@ -315,6 +339,7 @@ test("a second request inside TTL does not call any scraper", async () => {
     usd: 0,
     gold18: 0,
     coin: 0,
+    bahar: 0,
     gold24: 0,
     silver: 0,
     euro: 0,
@@ -331,6 +356,10 @@ test("a second request inside TTL does not call any scraper", async () => {
     coin: async ({ now }) => {
       calls.coin += 1;
       return resultFor({ coin: BASE_PRICES.coin }, now);
+    },
+    bahar: async ({ now }) => {
+      calls.bahar += 1;
+      return resultFor({ bahar: BASE_PRICES.bahar }, now);
     },
     usd: async ({ now }) => {
       calls.usd += 1;
@@ -368,6 +397,7 @@ test("a second request inside TTL does not call any scraper", async () => {
     usd: 1,
     gold18: 1,
     coin: 1,
+    bahar: 1,
     gold24: 1,
     silver: 1,
     euro: 1,
@@ -484,6 +514,7 @@ test("500 concurrent cold requests share one fetch per group", async () => {
     usd: 0,
     gold18: 0,
     coin: 0,
+    bahar: 0,
     gold24: 0,
     silver: 0,
     euro: 0,
@@ -500,6 +531,10 @@ test("500 concurrent cold requests share one fetch per group", async () => {
     coin: async ({ now }) => {
       calls.coin += 1;
       return resultFor({ coin: BASE_PRICES.coin }, now);
+    },
+    bahar: async ({ now }) => {
+      calls.bahar += 1;
+      return resultFor({ bahar: BASE_PRICES.bahar }, now);
     },
     usd: async ({ now }) => {
       calls.usd += 1;
@@ -529,6 +564,7 @@ test("500 concurrent cold requests share one fetch per group", async () => {
     usd: 1,
     gold18: 1,
     coin: 1,
+    bahar: 1,
     gold24: 1,
     silver: 1,
     euro: 1,
@@ -612,6 +648,9 @@ test("all cold failures produce an offline payload and a 503", async () => {
       throw engineError("blocked");
     },
     coin: async () => {
+      throw engineError("network");
+    },
+    bahar: async () => {
       throw engineError("network");
     },
     gold24: async () => {
