@@ -27,8 +27,8 @@ export default function LiveHeader() {
   const updatedAt = data?.updatedAt ? formatTime(data.updatedAt) : "—";
 
   return (
-    <header className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="text-right">
+    <header className="relative flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="pt-12 text-right sm:pt-0">
         <h1 className="text-xl font-bold text-text sm:text-2xl">
           نرخ لحظه‌ای طلا و ارز
         </h1>
@@ -40,7 +40,7 @@ export default function LiveHeader() {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 self-start text-sm sm:self-auto">
+      <div className="absolute left-0 top-0 flex max-w-full flex-wrap items-center gap-x-3 gap-y-2 self-start text-sm sm:static sm:self-auto">
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
