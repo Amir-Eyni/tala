@@ -36,7 +36,7 @@ export default function MinMaxTracker() {
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {TRACKED_ASSETS.map(({ id, title }) => {
           const asset = assets[id];
           const high24h = isValidPrice(asset?.high24h)
@@ -48,7 +48,7 @@ export default function MinMaxTracker() {
 
           return (
             <article
-              className="rounded-row border border-line bg-surface p-4 text-right"
+              className="rounded-xl border border-line bg-[#131b33] p-4 text-right"
               key={id}
             >
               <h3 className="font-semibold text-text">{title}</h3>

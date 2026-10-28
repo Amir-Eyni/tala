@@ -9,8 +9,8 @@ export default function Home() {
     <main className="tala-page min-h-screen py-8">
       <LiveHeader />
       <AssetRows />
-      <QuickConverter />
       <MinMaxTracker />
+      <QuickConverter />
       <StatusFooter />
     </main>
   );
