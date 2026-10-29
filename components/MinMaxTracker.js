@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
+import Skeleton from "@/components/Skeleton";
 import { formatToman } from "@/utils/formatPrice";
 
 const TRACKED_ASSETS = [
@@ -21,11 +22,12 @@ function isValidPrice(value) {
 }
 
 export default function MinMaxTracker() {
-  const { data } = useGoldPrices();
+  const { data, isLoading } = useGoldPrices();
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef(null);
   const closeButtonRef = useRef(null);
   const assets = data?.assets ?? {};
+  const isInitialLoading = isLoading && !data;
 
   useEffect(() => {
     if (!isOpen) {
@@ -135,7 +137,10 @@ export default function MinMaxTracker() {
               </button>
             </header>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div
+              aria-busy={isInitialLoading}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
               {TRACKED_ASSETS.map(({ id, title }) => {
                 const asset = assets[id];
                 const high24h = isValidPrice(asset?.high24h)
@@ -144,6 +149,8 @@ export default function MinMaxTracker() {
                 const low24h = isValidPrice(asset?.low24h)
                   ? asset.low24h
                   : null;
+                const isLoadingHigh = isInitialLoading && high24h === null;
+                const isLoadingLow = isInitialLoading && low24h === null;
 
                 return (
                   <article
@@ -156,10 +163,16 @@ export default function MinMaxTracker() {
                         ▲ بیشترین
                       </span>
                       <span className="font-bold text-text tala-numeric">
-                        {formatToman(high24h)}
-                        <span className="mr-1 text-xs font-medium text-muted">
-                          تومان
-                        </span>
+                        {isLoadingHigh ? (
+                          <Skeleton className="inline-block h-4 w-24 align-middle" />
+                        ) : (
+                          <>
+                            {formatToman(high24h)}
+                            <span className="mr-1 text-xs font-medium text-muted">
+                              تومان
+                            </span>
+                          </>
+                        )}
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-3">
@@ -167,10 +180,16 @@ export default function MinMaxTracker() {
                         ▼ کمترین
                       </span>
                       <span className="font-bold text-text tala-numeric">
-                        {formatToman(low24h)}
-                        <span className="mr-1 text-xs font-medium text-muted">
-                          تومان
-                        </span>
+                        {isLoadingLow ? (
+                          <Skeleton className="inline-block h-4 w-24 align-middle" />
+                        ) : (
+                          <>
+                            {formatToman(low24h)}
+                            <span className="mr-1 text-xs font-medium text-muted">
+                              تومان
+                            </span>
+                          </>
+                        )}
                       </span>
                     </div>
                   </article>

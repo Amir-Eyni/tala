@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
+import Skeleton from "@/components/Skeleton";
 import { formatToman } from "@/utils/formatPrice";
 
 const amountFormatter = new Intl.NumberFormat("fa-IR", {
@@ -60,7 +61,7 @@ function getFormattedCaret(value, digitOffset) {
 }
 
 export default function QuickConverter() {
-  const { data } = useGoldPrices();
+  const { data, isLoading } = useGoldPrices();
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const inputRef = useRef(null);
@@ -71,6 +72,7 @@ export default function QuickConverter() {
   const validAmount =
     numericAmount !== null && Number.isFinite(numericAmount);
   const assets = data?.assets ?? {};
+  const isInitialLoading = isLoading && !data;
 
   useLayoutEffect(() => {
     const pendingCaret = pendingCaretRef.current;
@@ -247,6 +249,7 @@ export default function QuickConverter() {
             />
 
             <div
+              aria-busy={isInitialLoading}
               aria-live="polite"
               className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
             >
@@ -268,18 +271,30 @@ export default function QuickConverter() {
                       {title}
                     </h3>
                     <p className="mt-2 text-lg font-bold text-text tala-numeric">
-                      {equivalent === null
-                        ? "—"
-                        : amountFormatter
-                            .format(equivalent)
-                            .replace(/\u066b/g, ".")}
-                      <span className="mr-1 text-sm font-medium text-muted">
-                        {unit}
-                      </span>
+                      {isInitialLoading ? (
+                        <Skeleton className="inline-block h-6 w-20 align-middle" />
+                      ) : (
+                        <>
+                          {equivalent === null
+                            ? "—"
+                            : amountFormatter
+                                .format(equivalent)
+                                .replace(/\u066b/g, ".")}
+                          <span className="mr-1 text-sm font-medium text-muted">
+                            {unit}
+                          </span>
+                        </>
+                      )}
                     </p>
                     <p className="mt-1 text-xs text-muted">
                       قیمت واحد:{" "}
-                      {hasPrice ? `${formatToman(price)} تومان` : "ناموجود"}
+                      {isInitialLoading ? (
+                        <Skeleton className="inline-block h-3.5 w-24 align-middle" />
+                      ) : hasPrice ? (
+                        `${formatToman(price)} تومان`
+                      ) : (
+                        "ناموجود"
+                      )}
                     </p>
                   </div>
                 );

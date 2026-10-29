@@ -3,26 +3,32 @@
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
 import { formatTime } from "@/utils/formatPrice";
 import InstallPrompt from "@/components/InstallPrompt";
+import Skeleton from "@/components/Skeleton";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LiveHeader() {
-  const { data, isFetching, isError } = useGoldPrices();
+  const { data, isLoading, isFetching, isError } = useGoldPrices();
   const status = data?.status;
+  const isInitialLoading = isLoading && !data;
   const isStale = status === "stale" || status === "offline";
-  const isHealthy = !isError && !isStale && status === "healthy";
-  const isUnavailable = !isHealthy;
+  const isHealthy = !isInitialLoading && !isError && !isStale && status === "healthy";
+  const isUnavailable = !isInitialLoading && !isHealthy;
 
-  const indicatorColor = isError
-    ? "bg-red-500"
-    : isUnavailable
-      ? "bg-yellow-500"
-      : "bg-up";
+  const indicatorColor = isInitialLoading
+    ? "bg-brand"
+    : isError
+      ? "bg-red-500"
+      : isUnavailable
+        ? "bg-yellow-500"
+        : "bg-up";
 
-  const statusLabel = isError
-    ? "قطعی موقت"
-    : isUnavailable
+  const statusLabel = isInitialLoading
+    ? "در حال اتصال"
+    : isError
       ? "قطعی موقت"
-      : "زنده";
+      : isUnavailable
+        ? "قطعی موقت"
+        : "زنده";
 
   const updatedAt = data?.updatedAt ? formatTime(data.updatedAt) : "—";
 
@@ -36,7 +42,12 @@ export default function LiveHeader() {
           className="mt-1 text-sm text-muted tala-numeric"
           aria-live="polite"
         >
-          آخرین به‌روزرسانی: {updatedAt}
+          آخرین به‌روزرسانی:{" "}
+          {isInitialLoading ? (
+            <Skeleton className="inline-block h-4 w-16 align-middle" />
+          ) : (
+            updatedAt
+          )}
         </p>
       </div>
 
@@ -45,20 +56,28 @@ export default function LiveHeader() {
           <span
             aria-hidden="true"
             className={`size-2.5 rounded-full ${indicatorColor} ${
-              isHealthy ? "animate-live-pulse" : ""
+              isHealthy || isInitialLoading ? "animate-live-pulse" : ""
             }`}
           />
           <span
             className={
-              isError
-                ? "font-semibold text-red-500"
-                : isUnavailable
-                  ? "font-semibold text-yellow-500"
-                  : "font-semibold text-up"
+              isInitialLoading
+                ? "font-semibold text-muted"
+                : isError
+                  ? "font-semibold text-red-500"
+                  : isUnavailable
+                    ? "font-semibold text-yellow-500"
+                    : "font-semibold text-up"
             }
           >
             {statusLabel}
           </span>
+
+          {isInitialLoading && (
+            <span className="hidden text-muted sm:inline" role="status">
+              در حال دریافت داده…
+            </span>
+          )}
 
           {isFetching && isHealthy && (
             <>
