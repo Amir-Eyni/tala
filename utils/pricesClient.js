@@ -5,10 +5,7 @@ function isRecord(value) {
 }
 
 function isPrice(value) {
-  return (
-    value === null ||
-    (Number.isSafeInteger(value) && value > 0)
-  );
+  return value === null || (Number.isSafeInteger(value) && value > 0);
 }
 
 function isPricePayload(value) {

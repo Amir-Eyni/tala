@@ -12,7 +12,7 @@ const vazirmatn = Vazirmatn({
 
 export const metadata = {
   metadataBase: getSiteUrl() ?? undefined,
-  title: "cfm tala",
+  title: "طلا",
   description:
     "قیمت لحظه‌ای طلای ۱۸ و ۲۴ عیار و ارزها را در یک داشبورد زنده و به‌روز دنبال کنید.",
   openGraph: {
@@ -32,7 +32,7 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "cfm tala",
+    title: "طلا",
   },
   icons: {
     apple: [
