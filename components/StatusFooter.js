@@ -2,21 +2,27 @@
 
 import { useGoldPrices } from "@/app/hooks/useGoldPrices";
 import { formatTime } from "@/utils/formatPrice";
+import Skeleton from "@/components/Skeleton";
 
 export default function StatusFooter() {
-  const { data, isError } = useGoldPrices();
-  const isHealthy = !isError && data?.status === "healthy";
-  const isErrorState = isError || data?.status === "offline";
-  const indicatorClass = isHealthy
-    ? "bg-up"
-    : isErrorState
-      ? "bg-down"
-      : "bg-warn";
-  const statusLabel = isHealthy
-    ? "اتصال سالم"
-    : isErrorState
-      ? "قطعی موقت"
-      : "دادهٔ قدیمی یا در دسترس نیست";
+  const { data, isLoading, isError } = useGoldPrices();
+  const isInitialLoading = isLoading && !data;
+  const isHealthy = !isInitialLoading && !isError && data?.status === "healthy";
+  const isErrorState = !isInitialLoading && (isError || data?.status === "offline");
+  const indicatorClass = isInitialLoading
+    ? "bg-brand animate-live-pulse"
+    : isHealthy
+      ? "bg-up"
+      : isErrorState
+        ? "bg-down"
+        : "bg-warn";
+  const statusLabel = isInitialLoading
+    ? "در حال اتصال"
+    : isHealthy
+      ? "اتصال سالم"
+      : isErrorState
+        ? "قطعی موقت"
+        : "دادهٔ قدیمی یا در دسترس نیست";
   const updatedAt = data?.updatedAt ? formatTime(data.updatedAt) : "—";
 
   return (
@@ -30,11 +36,13 @@ export default function StatusFooter() {
           <span>وضعیت اتصال به شبکه‌های مرجع:</span>
           <span
             className={
-              isHealthy
-                ? "font-semibold text-up"
-                : isErrorState
-                  ? "font-semibold text-down"
-                  : "font-semibold text-warn"
+              isInitialLoading
+                ? "font-semibold text-muted"
+                : isHealthy
+                  ? "font-semibold text-up"
+                  : isErrorState
+                    ? "font-semibold text-down"
+                    : "font-semibold text-warn"
             }
             role="status"
           >
@@ -42,7 +50,12 @@ export default function StatusFooter() {
           </span>
         </div>
         <p className="tala-numeric">
-          آخرین به‌روزرسانی کلی: {updatedAt}
+          آخرین به‌روزرسانی کلی:{" "}
+          {isInitialLoading ? (
+            <Skeleton className="inline-block h-4 w-16 align-middle" />
+          ) : (
+            updatedAt
+          )}
         </p>
       </div>
     </footer>

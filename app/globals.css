@@ -177,6 +177,20 @@
   }
 }
 
+/*
+ * Loading placeholder. The shimmer sits in a pseudo-element so the bar keeps a
+ * stable surface color under reduced-motion (the animation is then disabled).
+ */
+@keyframes tala-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* --------------------------------------------------------------------------
    Base
    -------------------------------------------------------------------------- */
@@ -282,6 +296,30 @@
 
   .tala-flash-down {
     animation-name: tala-flash-down;
+  }
+
+  /*
+   * Used by <Skeleton />. The base tone is derived from the theme line color so
+   * it works in both light and dark mode without extra overrides.
+   */
+  .tala-skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: color-mix(in oklab, var(--tala-line) 55%, transparent);
+  }
+
+  .tala-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--tala-surface) 75%, transparent),
+      transparent
+    );
+    animation: tala-skeleton-shimmer 1.5s ease-in-out infinite;
   }
 
   /* Row price: 1.35rem on mobile, 1.8rem from the md breakpoint up. */

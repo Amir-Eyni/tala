@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
-    name: "cfm tala",
-    short_name: "cfm tala",
+    name: "طلا",
+    short_name: "طلا",
     description: "داشبورد زنده قیمت طلا، سکه و ارز",
     start_url: "/",
     scope: "/",
