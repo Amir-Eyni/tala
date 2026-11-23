@@ -3,12 +3,14 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  EXPECTED_HOSTS,
   MAX_RESPONSE_BYTES,
   SOURCE_URLS,
 } from "../utils/constants.server.js";
 import {
   fetchWithTimeout,
   fetchText,
+  isAllowedHost,
   parseOptionalPercent,
   parsePrice,
   readTextLimited,
@@ -695,4 +697,86 @@ test("readTextLimited rejects immediately when signal is already aborted", async
   );
 
   assert.equal(cancelCalled, true);
+});
+
+test("isAllowedHost enforces exact hostname equality and rejects arbitrary subdomains", () => {
+  // Exact single-host matches
+  assert.equal(isAllowedHost("api.wallex.ir", "api.wallex.ir"), true);
+  assert.equal(isAllowedHost("API.WALLEX.IR", "api.wallex.ir"), true);
+  assert.equal(isAllowedHost("api.wallex.ir", "API.WALLEX.IR"), true);
+
+  // Subdomain matching must be rejected (L-01)
+  assert.equal(isAllowedHost("evil.api.wallex.ir", "api.wallex.ir"), false);
+  assert.equal(isAllowedHost("sub.wallex.ir", "api.wallex.ir"), false);
+  assert.equal(isAllowedHost("attacker.tgju.org", "www.tgju.org"), false);
+  assert.equal(isAllowedHost("tgju.org.attacker.com", "tgju.org"), false);
+
+  // Exact matches in an allowlist containing www and non-www
+  const tgjuList = ["www.tgju.org", "tgju.org"];
+  assert.equal(isAllowedHost("www.tgju.org", tgjuList), true);
+  assert.equal(isAllowedHost("tgju.org", tgjuList), true);
+  assert.equal(isAllowedHost("WWW.TGJU.ORG", tgjuList), true);
+  assert.equal(isAllowedHost("attacker.tgju.org", tgjuList), false);
+  assert.equal(isAllowedHost("evil.www.tgju.org", tgjuList), false);
+
+  // Set allowlist
+  assert.equal(isAllowedHost("tgju.org", new Set(tgjuList)), true);
+  assert.equal(isAllowedHost("rogue.tgju.org", new Set(tgjuList)), false);
+
+  // Edge cases and invalid inputs
+  assert.equal(isAllowedHost("", "tgju.org"), false);
+  assert.equal(isAllowedHost("tgju.org", ""), false);
+  assert.equal(isAllowedHost(null, "tgju.org"), false);
+  assert.equal(isAllowedHost("tgju.org", null), false);
+  assert.equal(isAllowedHost(undefined, "tgju.org"), false);
+  assert.equal(isAllowedHost("tgju.org", []), false);
+
+  // Configured EXPECTED_HOSTS validation
+  assert.equal(isAllowedHost("www.tgju.org", EXPECTED_HOSTS.tgju), true);
+  assert.equal(isAllowedHost("tgju.org", EXPECTED_HOSTS.tgju), true);
+  assert.equal(isAllowedHost("fake.tgju.org", EXPECTED_HOSTS.tgju), false);
+  assert.equal(isAllowedHost("api.wallex.ir", EXPECTED_HOSTS.wallex), true);
+  assert.equal(isAllowedHost("bad.api.wallex.ir", EXPECTED_HOSTS.wallex), false);
+});
+
+test("fetchWithTimeout allows redirects between explicitly allowlisted hosts (e.g. www and non-www)", async () => {
+  const fetchImpl = createFetch([
+    mockResponse("", {
+      status: 301,
+      url: "https://www.tgju.org/profile/geram24",
+      headers: { location: "https://tgju.org/profile/geram24" },
+    }),
+    mockResponse("OK", {
+      status: 200,
+      url: "https://tgju.org/profile/geram24",
+    }),
+  ]);
+
+  const response = await fetchWithTimeout("https://www.tgju.org/profile/geram24", {
+    fetchImpl,
+    expectedHost: ["www.tgju.org", "tgju.org"],
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(fetchImpl.calls.length, 2);
+});
+
+test("fetchWithTimeout blocks redirect to an unlisted subdomain of an allowlisted domain", async () => {
+  const fetchImpl = createFetch([
+    mockResponse("", {
+      status: 302,
+      url: "https://www.tgju.org/profile/geram24",
+      headers: { location: "https://attacker.tgju.org/steal" },
+    }),
+  ]);
+
+  await assert.rejects(
+    fetchWithTimeout("https://www.tgju.org/profile/geram24", {
+      fetchImpl,
+      expectedHost: ["www.tgju.org", "tgju.org"],
+    }),
+    (error) => error.code === "blocked",
+  );
+
+  assert.equal(fetchImpl.calls.length, 1);
 });

@@ -25,22 +25,24 @@ export const SOURCE_URLS = {
   tgjuBahar: "https://www.tgju.org/profile/sekeb",
 };
 
+const TGJU_HOSTS = Object.freeze(["www.tgju.org", "tgju.org"]);
+
 /**
- * Allowed response host per source. A redirect to any other host (or a
- * subdomain of it) is rejected with ScraperError.code === "blocked".
+ * Allowed response host(s) per source. A redirect to any other host (or an
+ * unapproved subdomain) is rejected with ScraperError.code === "blocked".
  *
- * @type {{ wallex: string, talaseaJson: string, gold18Html: string, tgju: string, tgjuDollar: string, tgjuEuro: string, tgjuSilver: string, tgjuCoin: string, tgjuBahar: string }}
+ * @type {{ wallex: readonly string[], talaseaJson: readonly string[], gold18Html: readonly string[], tgju: readonly string[], tgjuDollar: readonly string[], tgjuEuro: readonly string[], tgjuSilver: readonly string[], tgjuCoin: readonly string[], tgjuBahar: readonly string[] }}
  */
 export const EXPECTED_HOSTS = {
-  wallex: "api.wallex.ir",
-  talaseaJson: "alibaba-gateway.talasea.ir",
-  gold18Html: "www.tgju.org",
-  tgju: "www.tgju.org",
-  tgjuDollar: "www.tgju.org",
-  tgjuEuro: "www.tgju.org",
-  tgjuSilver: "www.tgju.org",
-  tgjuCoin: "www.tgju.org",
-  tgjuBahar: "www.tgju.org",
+  wallex: Object.freeze(["api.wallex.ir"]),
+  talaseaJson: Object.freeze(["alibaba-gateway.talasea.ir"]),
+  gold18Html: TGJU_HOSTS,
+  tgju: TGJU_HOSTS,
+  tgjuDollar: TGJU_HOSTS,
+  tgjuEuro: TGJU_HOSTS,
+  tgjuSilver: TGJU_HOSTS,
+  tgjuCoin: TGJU_HOSTS,
+  tgjuBahar: TGJU_HOSTS,
 };
 
 /**
