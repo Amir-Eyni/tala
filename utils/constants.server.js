@@ -26,12 +26,18 @@ export const SOURCE_URLS = {
 };
 
 const TGJU_HOSTS = Object.freeze(["www.tgju.org", "tgju.org"]);
+const FOREX_HOSTS = Object.freeze([
+  "api.gold-api.com",
+  "www.litefinance.org",
+  "litefinance.org",
+  "my.litefinance.org",
+]);
 
 /**
  * Allowed response host(s) per source. A redirect to any other host (or an
  * unapproved subdomain) is rejected with ScraperError.code === "blocked".
  *
- * @type {{ wallex: readonly string[], talaseaJson: readonly string[], gold18Html: readonly string[], tgju: readonly string[], tgjuDollar: readonly string[], tgjuEuro: readonly string[], tgjuSilver: readonly string[], tgjuCoin: readonly string[], tgjuBahar: readonly string[] }}
+ * @type {{ wallex: readonly string[], talaseaJson: readonly string[], gold18Html: readonly string[], tgju: readonly string[], tgjuDollar: readonly string[], tgjuEuro: readonly string[], tgjuSilver: readonly string[], tgjuCoin: readonly string[], tgjuBahar: readonly string[], forex: readonly string[] }}
  */
 export const EXPECTED_HOSTS = {
   wallex: Object.freeze(["api.wallex.ir"]),
@@ -43,7 +49,20 @@ export const EXPECTED_HOSTS = {
   tgjuSilver: TGJU_HOSTS,
   tgjuCoin: TGJU_HOSTS,
   tgjuBahar: TGJU_HOSTS,
+  forex: FOREX_HOSTS,
 };
+
+/**
+ * Source URLs for Forex market instruments.
+ *
+ * @type {{ xauusd: string, xagusd: string, btcusd: string, ethusd: string }}
+ */
+export const FOREX_SOURCE_URLS = Object.freeze({
+  xauusd: "https://api.gold-api.com/price/XAU",
+  xagusd: "https://api.gold-api.com/price/XAG",
+  btcusd: "https://api.gold-api.com/price/BTC",
+  ethusd: "https://api.gold-api.com/price/ETH",
+});
 
 /**
  * Real desktop Chrome user agent. Shared by all outbound requests.

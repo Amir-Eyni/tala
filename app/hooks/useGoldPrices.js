@@ -18,7 +18,7 @@ export function useGoldPrices() {
     queryKey: GOLD_PRICES_QUERY_KEY,
     queryFn: fetchPrices,
     refetchInterval: CLIENT_REFETCH_INTERVAL_MS,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     staleTime: CLIENT_STALE_TIME_MS,
     placeholderData: keepPreviousData,
   });

@@ -58,6 +58,29 @@ export function formatTomanWithUnit(value) {
 }
 
 /**
+ * Format a forex dollar value with standard market decimal digits and thousands separator.
+ *
+ * @param {number} value - Forex price in USD.
+ * @param {number} [digits=2] - Number of fraction digits.
+ * @returns {string} Formatted price with decimals.
+ */
+export function formatForexPrice(value, digits = 2) {
+  if (!isValidPrice(value)) {
+    return DASH;
+  }
+
+  const formatter = new Intl.NumberFormat("fa-IR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+
+  return formatter
+    .format(value)
+    .replace(PERSIAN_THOUSANDS_SEPARATOR, ",")
+    .replace(/\u066B/g, ".");
+}
+
+/**
  * Calculate the absolute and percentage change between two prices.
  *
  * @param {number} current - Current price.

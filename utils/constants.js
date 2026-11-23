@@ -71,14 +71,14 @@ export const CURRENCY_LABEL = "تومان";
  * @type {Record<string, number>}
  */
 export const TTL_SECONDS = {
-  gold18k: 14,
-  coin: 14,
-  bahar: 14,
-  gold24k: 14,
-  silver: 14,
-  usd: 14,
-  usdt: 14,
-  euro: 14,
+  gold18k: 1.5,
+  coin: 1.5,
+  bahar: 1.5,
+  gold24k: 1.5,
+  silver: 1.5,
+  usd: 1.5,
+  usdt: 1.5,
+  euro: 1.5,
 };
 
 /**
@@ -145,13 +145,13 @@ export const GROUP_DEADLINE_MS = 12000;
  * Client-side price refetch interval.
  * @type {number}
  */
-export const CLIENT_REFETCH_INTERVAL_MS = 15000;
+export const CLIENT_REFETCH_INTERVAL_MS = 2000;
 
 /**
  * Time before client-side price data is considered stale.
  * @type {number}
  */
-export const CLIENT_STALE_TIME_MS = 10000;
+export const CLIENT_STALE_TIME_MS = 1500;
 
 /**
  * Duration of the price-change flash animation.
@@ -163,7 +163,7 @@ export const FLASH_DURATION_MS = 1500;
  * Seconds for the Retry-After header on fallback responses.
  * @type {number}
  */
-export const RETRY_AFTER_SECONDS = 5;
+export const RETRY_AFTER_SECONDS = 2;
 
 /**
  * Maximum number of redirects to follow for scraper requests.

@@ -178,9 +178,9 @@ test("group deadline stays below the single-flight lock", () => {
   assert.equal(GROUP_DEADLINE_MS < SINGLE_FLIGHT_MAX_LOCK_MS, true);
 });
 
-test("every asset cache TTL is shorter than the 15-second client poll", () => {
+test("every asset cache TTL is shorter than the 2-second client poll", () => {
   for (const ttlSeconds of Object.values(TTL_SECONDS)) {
-    assert.ok(ttlSeconds <= 15);
+    assert.ok(ttlSeconds < 2);
   }
 });
 
@@ -688,7 +688,7 @@ test("all cold failures produce an offline payload and a 503", async () => {
   const response = toHttpResponse(payload);
   assert.equal(response.status, 503);
   assert.equal(response.headers["Cache-Control"], "no-store");
-  assert.equal(response.headers["Retry-After"], "5");
+  assert.equal(response.headers["Retry-After"], "2");
 });
 
 test("buildOfflinePayload returns full contract shape and order", () => {
@@ -727,7 +727,7 @@ test("toHttpResponse handles offline payload and keeps online headers exact", ()
 
   assert.equal(offlineResponse.status, 503);
   assert.equal(offlineResponse.headers["Cache-Control"], "no-store");
-  assert.equal(offlineResponse.headers["Retry-After"], "5");
+  assert.equal(offlineResponse.headers["Retry-After"], "2");
   assert.equal(
     offlineResponse.headers["Content-Type"],
     "application/json; charset=utf-8",
@@ -766,7 +766,7 @@ test("toHttpResponse handles offline payload and keeps online headers exact", ()
   assert.equal(ok.status, 200);
   assert.equal(
     ok.headers["Cache-Control"],
-    "no-store",
+    "s-maxage=1, stale-while-revalidate=2",
   );
   assert.equal(ok.headers["Content-Type"], "application/json; charset=utf-8");
   assert.equal(ok.headers["X-Content-Type-Options"], "nosniff");
@@ -1043,7 +1043,7 @@ test("toHttpResponse returns the 200 and 503 headers for both states", async () 
   assert.equal(ok.status, 200);
   assert.equal(
     ok.headers["Cache-Control"],
-    "no-store",
+    "s-maxage=1, stale-while-revalidate=2",
   );
   assert.equal(ok.headers["Content-Type"], "application/json; charset=utf-8");
   assert.equal(ok.headers["X-Content-Type-Options"], "nosniff");
@@ -1057,7 +1057,7 @@ test("toHttpResponse returns the 200 and 503 headers for both states", async () 
 
   assert.equal(unavailable.status, 503);
   assert.equal(unavailable.headers["Cache-Control"], "no-store");
-  assert.equal(unavailable.headers["Retry-After"], "5");
+  assert.equal(unavailable.headers["Retry-After"], "2");
   assert.equal(
     unavailable.headers["Content-Type"],
     "application/json; charset=utf-8",
@@ -1177,7 +1177,7 @@ test("buildOfflinePayload matches full client contract and toHttpResponse suppli
 
   const response = toHttpResponse(offline);
   assert.equal(response.status, 503);
-  assert.equal(response.headers["Retry-After"], "5");
+  assert.equal(response.headers["Retry-After"], "2");
   assert.equal(response.headers["Cache-Control"], "no-store");
   assert.equal(response.headers["X-Content-Type-Options"], "nosniff");
   assert.deepEqual(response.body, offline);

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --conditions=react-server --test tests/scrapers.test.mjs tests/cache.test.mjs tests/priceEngine.test.mjs tests/pricesClient.test.mjs"
+    "test": "node --conditions=react-server --test tests/scrapers.test.mjs tests/cache.test.mjs tests/priceEngine.test.mjs tests/pricesClient.test.mjs tests/forex.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",
