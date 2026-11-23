@@ -568,3 +568,21 @@ test("cache outputs and errors contain no provider names or source field", () =>
     assert.equal(resetError.message.toLowerCase().includes(term), false);
   }
 });
+
+test("commitPrice rejects older timestamps and preserves newer data (monotonicity)", () => {
+  resetCacheForTests();
+  assert.equal(commitPrice("usd", 2_000, T0 + 10_000), true);
+
+  const stateBefore = getAssetState("usd", T0 + 10_000);
+  assert.equal(stateBefore.price, 2_000);
+  assert.equal(stateBefore.previousPrice, 2_000);
+
+  // Late-arriving older commit must be rejected and must not overwrite
+  const committed = commitPrice("usd", 1_000, T0);
+  assert.equal(committed, false);
+
+  const stateAfter = getAssetState("usd", T0 + 10_000);
+  assert.equal(stateAfter.price, 2_000);
+  assert.equal(stateAfter.previousPrice, 2_000);
+  assert.equal(Date.parse(stateAfter.updatedAt), T0 + 10_000);
+});

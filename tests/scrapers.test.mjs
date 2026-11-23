@@ -651,3 +651,48 @@ test("error messages stay neutral and never contain provider names or URLs", () 
     assert.doesNotMatch(message, /wallex|talasea|tgju|https?:\/\//i);
   }
 });
+
+test("readTextLimited cancels reader and cleans up abort listener when signal aborts", async () => {
+  const controller = new AbortController();
+  let cancelCalled = false;
+
+  const mockStream = new ReadableStream({
+    start(streamController) {
+      streamController.enqueue(new TextEncoder().encode("chunk-1"));
+    },
+    cancel() {
+      cancelCalled = true;
+    },
+  });
+
+  const response = new Response(mockStream);
+
+  setTimeout(() => controller.abort(), 10);
+
+  await assert.rejects(
+    readTextLimited(response, { signal: controller.signal }),
+    (error) => error instanceof ScraperError && error.code === "timeout",
+  );
+
+  assert.equal(cancelCalled, true);
+});
+
+test("readTextLimited rejects immediately when signal is already aborted", async () => {
+  const controller = new AbortController();
+  controller.abort();
+  let cancelCalled = false;
+
+  const mockStream = new ReadableStream({
+    cancel() {
+      cancelCalled = true;
+    },
+  });
+  const response = new Response(mockStream);
+
+  await assert.rejects(
+    readTextLimited(response, { signal: controller.signal }),
+    (error) => error instanceof ScraperError && error.code === "timeout",
+  );
+
+  assert.equal(cancelCalled, true);
+});

@@ -23,7 +23,11 @@ import {
   SINGLE_FLIGHT_MAX_LOCK_MS,
   TTL_SECONDS,
 } from "../utils/constants.js";
-import { changePercentSchema } from "../lib/validator.js";
+import {
+  changePercentSchema,
+  checkOutlier,
+  validatePrice,
+} from "../lib/validator.js";
 
 const T0 = 1_700_000_000_000;
 const BASE_PRICES = {
@@ -1118,4 +1122,102 @@ test("engine test helpers throw in production", () => {
       process.env.NODE_ENV = original;
     }
   }
+});
+
+test("validatePrice rejects outliers even when now is undefined, null, or invalid", () => {
+  const lastGood = { price: 100_000, updatedAt: Date.now() - 5_000 };
+  const outlierPrice = 200_000;
+
+  for (const invalidNow of [undefined, null, NaN, "invalid", Infinity]) {
+    const verdict = validatePrice({
+      assetId: "usd",
+      rawPrice: outlierPrice,
+      lastGood,
+      now: invalidNow,
+    });
+
+    assert.equal(verdict.accepted, false);
+    assert.equal(verdict.reason, "outlier");
+    assert.equal(verdict.usedFallback, true);
+    assert.equal(verdict.price, 100_000);
+  }
+});
+
+test("priceEngine commits fetchedAt from scrapers when available", async () => {
+  const explicitFetchedAt = T0 - 4_000;
+  const registry = oneGroupRegistry(async () => ({
+    prices: { usd: 105_000 },
+    fetchedAt: new Date(explicitFetchedAt).toISOString(),
+  }));
+
+  const result = await resolvePrices({
+    now: T0,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+
+  assert.equal(result.payload.assets.usd.price, 105_000);
+  const state = getAssetState("usd", T0);
+  assert.equal(Date.parse(state.updatedAt), explicitFetchedAt);
+});
+
+test("buildOfflinePayload matches full client contract and toHttpResponse supplies Retry-After", () => {
+  const offline = buildOfflinePayload();
+  assert.equal(offline.status, "offline");
+  assert.equal(offline.currency, "تومان");
+  assert.equal(typeof offline.assets, "object");
+  assert.equal(Object.keys(offline.assets).length, ASSET_IDS.length);
+
+  for (const id of ASSET_IDS) {
+    const asset = offline.assets[id];
+    assert.equal(asset.price, null);
+    assert.equal(asset.previousPrice, null);
+    assert.equal(asset.isStale, true);
+  }
+
+  const response = toHttpResponse(offline);
+  assert.equal(response.status, 503);
+  assert.equal(response.headers["Retry-After"], "5");
+  assert.equal(response.headers["Cache-Control"], "no-store");
+  assert.equal(response.headers["X-Content-Type-Options"], "nosniff");
+  assert.deepEqual(response.body, offline);
+});
+
+test("SWR resolvePrices returns stale payload immediately with non-blocking refresh promise", async () => {
+  let finishRefresh;
+  const refreshPromise = new Promise((resolve) => {
+    finishRefresh = resolve;
+  });
+  let refreshCalls = 0;
+
+  const registry = oneGroupRegistry(async ({ now }) => {
+    refreshCalls += 1;
+    if (refreshCalls > 1) {
+      await refreshPromise;
+    }
+    return resultFor({ usd: 100_000 + refreshCalls * 1_000 }, now);
+  });
+
+  const cold = await resolvePrices({
+    now: T0,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+  assert.equal(cold.payload.assets.usd.price, 101_000);
+
+  const staleAt = T0 + 15_000;
+  const stale = await resolvePrices({
+    now: staleAt,
+    registry,
+    coldStartMaxWaitMs: 200,
+  });
+
+  assert.equal(stale.payload.assets.usd.price, 101_000);
+  assert.ok(stale.refresh instanceof Promise);
+
+  finishRefresh();
+  await stale.refresh;
+
+  const after = buildPayload(staleAt);
+  assert.equal(after.assets.usd.price, 102_000);
 });
